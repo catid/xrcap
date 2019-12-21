@@ -1,0 +1,65 @@
+    // If we should cull unused image pixels:
+    if (config.CullImages && config.VideoNeeded)
+    {
+        if (!image->IsNV12) {
+            spdlog::error("FIXME: Implement three plane");
+            return false;
+        }
+        if (image->ColorWidth % 16 != 0 || image->ColorHeight % 16 != 0) {
+            spdlog::error("FIXME: Image size is not a multiple of 16");
+            return false;
+        }
+        if (image->ChromaWidth % 8 != 0 || image->ChromaHeight % 8 != 0) {
+            spdlog::error("FIXME: Image chroma size is not a multiple of 8");
+            return false;
+        }
+
+        ImageCullRegion& region = image->ImageCull;
+
+        const unsigned height_mbs = region.HeightMBs;
+        const unsigned width_mbs = region.WidthMBs;
+        const unsigned* starts = &region.StartMB[0];
+        const unsigned* ends = &region.EndMB[0];
+
+        uint8_t* y = image->FrameRef->Raw->Surface.Data.Y;
+        
+        uint8_t* uv = image->FrameRef->Raw->Surface.Data.UV;
+
+        for (unsigned ymb = 0; ymb < height_mbs; ++ymb)
+        {
+            const unsigned start = starts[ymb];
+            const unsigned end = ends[ymb] + 1; // non-inclusive
+
+            // If there is nothing in this mb row:
+            if (start >= end) {
+                // Clear entire mb row
+                memset(y, 0, width_mbs * 16 * 16);
+                memset(uv, 0, width_mbs * 16 * 8);
+            } else {
+                if (start > 0) {
+                    // Clear everything up until start
+                    for (unsigned i = 0; i < 16; ++i) {
+                        memset(y + i * width_mbs * 16, 0, start * 16);
+                    }
+                    for (unsigned i = 0; i < 8; ++i) {
+                        memset(uv + i * width_mbs * 16, 0, start * 16);
+                    }
+                }
+                if (end < width_mbs) {
+                    // Clear everything up until end
+                    const unsigned end_count_mbs = width_mbs - end;
+                    uint8_t* y_end = y + end * 16;
+                    uint8_t* uv_end = uv + end * 16;
+                    for (unsigned i = 0; i < 16; ++i) {
+                        memset(y_end + i * width_mbs * 16, 0, end_count_mbs * 16);
+                    }
+                    for (unsigned i = 0; i < 8; ++i) {
+                        memset(uv_end + i * width_mbs * 16, 0, end_count_mbs * 16);
+                    }
+                }
+            }
+
+            y += width_mbs * 16 * 16;
+            uv += width_mbs * 16 * 8;
+        }
+    }

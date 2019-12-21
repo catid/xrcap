@@ -1,0 +1,63 @@
+
+    message("Copying jpegturbo library to build folder: ${TURBOJPEG_DYNLIB}")
+    add_custom_command(TARGET ${DYNLIB_TARGET} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${TURBOJPEG_DYNLIB}"
+            "${DYNLIB_DEST}"
+    )
+
+    message("Copying ffmpeg library to build folder: ${FFMPEG_AVCODEC_DYNLIB}")
+    add_custom_command(TARGET ${DYNLIB_TARGET} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${FFMPEG_AVCODEC_DYNLIB}"
+            "${DYNLIB_DEST}"
+    )
+
+    message("Copying ffmpeg library to build folder: ${FFMPEG_AVFORMAT_DYNLIB}")
+    add_custom_command(TARGET ${DYNLIB_TARGET} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${FFMPEG_AVFORMAT_DYNLIB}"
+            "${DYNLIB_DEST}"
+    )
+
+    message("Copying ffmpeg library to build folder: ${FFMPEG_AVUTIL_DYNLIB}")
+    add_custom_command(TARGET ${DYNLIB_TARGET} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${FFMPEG_AVUTIL_DYNLIB}"
+            "${DYNLIB_DEST}"
+    )
+
+    message("Copying ffmpeg library to build folder: ${FFMPEG_AVDEVICE_DYNLIB}")
+    add_custom_command(TARGET ${DYNLIB_TARGET} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${FFMPEG_AVDEVICE_DYNLIB}"
+            "${DYNLIB_DEST}"
+    )
+
+    message("Copying ffmpeg library to build folder: ${FFMPEG_AVFILTER_DYNLIB}")
+    add_custom_command(TARGET ${DYNLIB_TARGET} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${FFMPEG_AVFILTER_DYNLIB}"
+            "${DYNLIB_DEST}"
+    )
+
+    message("Copying ffmpeg library to build folder: ${FFMPEG_POSTPROC_DYNLIB}")
+    add_custom_command(TARGET ${DYNLIB_TARGET} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${FFMPEG_POSTPROC_DYNLIB}"
+            "${DYNLIB_DEST}"
+    )
+
+    message("Copying ffmpeg library to build folder: ${FFMPEG_SWRESAMPLE_DYNLIB}")
+    add_custom_command(TARGET ${DYNLIB_TARGET} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${FFMPEG_SWRESAMPLE_DYNLIB}"
+            "${DYNLIB_DEST}"
+    )
+
+    message("Copying ffmpeg library to build folder: ${FFMPEG_SWSCALE_DYNLIB}")
+    add_custom_command(TARGET ${DYNLIB_TARGET} POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${FFMPEG_SWSCALE_DYNLIB}"
+            "${DYNLIB_DEST}"
+    )
