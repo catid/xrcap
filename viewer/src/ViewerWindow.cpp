@@ -6,6 +6,7 @@
 #include <core_string.hpp>
 
 #include <nfd.h> // nativefiledialog library
+#include <meshoptimizer.h>
 
 #include "AppIcon.inc"
 #define STB_IMAGE_IMPLEMENTATION
@@ -709,7 +710,7 @@ void ViewerWindow::SetupUI()
         recording_title = "Recording (no file)";
     }
 
-    if (nk_begin_titled(ctx, "Recording", recording_title.c_str(), nk_rect(1040, 530, 320, 130),
+    if (nk_begin_titled(ctx, "Recording", recording_title.c_str(), nk_rect(1040, 530, 320, 160),
         NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
         NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
     {
@@ -737,6 +738,11 @@ void ViewerWindow::SetupUI()
 
         nk_layout_row_dynamic(ctx, 30, 1);
         nk_checkbox_label(ctx, "Photobooth: Right-click trigger", &PhotoboothEnabled);
+
+        nk_layout_row_dynamic(ctx, 30, 1);
+        if (nk_button_label(ctx, "Save Mesh (glTF 2.0)")) {
+            SaveMesh();
+        }
 
         bounds = nk_window_get_bounds(ctx);
     }
@@ -901,6 +907,52 @@ void ViewerWindow::CloseFile()
     IsFileOpen = false;
 
     xrcap_reset();
+}
+
+void ViewerWindow::SaveMesh()
+{
+    spdlog::info("Saving mesh");
+    for (int i = 0; i < XRCAP_PERSPECTIVE_COUNT; ++i)
+    {
+        auto& perspective = LastFrame.Perspectives[i];
+        if (!perspective.Valid) {
+            continue;
+        }
+        const float* xyzuv = perspective.XyzuvVertices;
+        const unsigned floats_count = perspective.FloatsCount;
+        const uint32_t* indices = perspective.Indices;
+        const unsigned indices_count = perspective.IndicesCount;
+        const uint8_t* y = perspective.Y;
+        const uint8_t* uv = perspective.UV;
+        const unsigned width = perspective.Width;
+        const unsigned height = perspective.Height;
+        const size_t vertex_size = 5 * sizeof(float);
+
+        std::vector<unsigned> remap(indices_count);
+        const size_t vertex_count = meshopt_generateVertexRemap(
+            &remap[0],
+            indices,
+            indices_count,
+            xyzuv,
+            floats_count / 5,
+            vertex_size);
+
+        std::vector<uint32_t> opt_indices(indices_count);
+        std::vector<float> opt_vertices(vertex_count * 5);
+        meshopt_remapIndexBuffer(opt_indices.data(), indices, indices_count, remap.data());
+        meshopt_remapVertexBuffer(opt_vertices.data(), xyzuv, vertex_count, vertex_size, remap.data());
+
+        meshopt_optimizeVertexCache(
+            opt_indices.data(), opt_indices.data(), indices_count, vertex_count);
+
+        meshopt_optimizeOverdraw(
+            opt_indices.data(), opt_indices.data(), indices_count,
+            opt_vertices.data(), vertex_count, vertex_size, 1.05f);
+
+        meshopt_optimizeVertexFetch(
+            opt_vertices.data(), opt_indices.data(), indices_count,
+            opt_vertices.data(), vertex_count, vertex_size);
+    }
 }
 
 void ViewerWindow::OpenRecordingFile()

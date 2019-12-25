@@ -142,6 +142,8 @@ protected:
     void CloseRecordingFile();
     void StartRecording();
     void PauseRecording();
+
+    void SaveMesh();
 };
 
 

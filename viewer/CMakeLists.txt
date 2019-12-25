@@ -30,6 +30,7 @@ target_link_libraries(viewer PRIVATE
     yaml
     depth_mesh
     nfd # nativefiledialog: Portable file open dialog
+    meshoptimizer # Mesh output save
 )
 
 install(TARGETS viewer DESTINATION bin)

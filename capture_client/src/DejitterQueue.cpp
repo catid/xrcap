@@ -307,7 +307,7 @@ std::shared_ptr<DecodedBatch> DejitterQueue::DequeueNext(int* sleep_msec)
         }
     }
 
-    spdlog::warn("FIXME: {}", output->FrameNumber);
+    //spdlog::warn("FIXME: {}", output->FrameNumber);
 
     return output;
 }

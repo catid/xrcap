@@ -121,3 +121,14 @@ ExternalProject_Add(
     SOURCE_DIR      ${CMAKE_SOURCE_DIR}/src/azurekinectsdk
     CMAKE_ARGS      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DK4A_VALIDATE_CLANG_FORMAT=OFF -DK4A_BUILD_DOCS=OFF -DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/bin/azurekinectsdk
 )
+
+# Zeux MeshOptimizer
+ExternalProject_Add(
+    MeshOptimizer
+    GIT_REPOSITORY  https://github.com/zeux/meshoptimizer.git
+    GIT_TAG         v0.13
+    GIT_SHALLOW     TRUE
+    BUILD_COMMAND   ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
+    SOURCE_DIR      ${CMAKE_SOURCE_DIR}/src/meshoptimizer
+    CMAKE_ARGS      -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_SOURCE_DIR}/bin/meshoptimizer
+)
