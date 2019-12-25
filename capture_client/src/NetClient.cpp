@@ -407,7 +407,10 @@ void CaptureConnection::OnBatchInfo(const protos::MessageBatchInfo& msg)
     BatchInfo = std::make_shared<protos::MessageBatchInfo>(msg);
 
     // Convert boot time to local time
-    BatchInfo->VideoBootUsec = FromRemoteTime(BatchInfo->VideoBootUsec);
+    const uint64_t remote_usec = BatchInfo->VideoBootUsec;
+    BatchInfo->VideoBootUsec = FromRemoteTime(remote_usec);
+
+    //spdlog::info("TEST: {} - {} [{}]", remote_usec, BatchInfo->VideoBootUsec, NetLocalName);
 }
 
 void CaptureConnection::OnCalibration(const protos::MessageCalibration& msg)

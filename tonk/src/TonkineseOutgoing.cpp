@@ -626,7 +626,7 @@ void SessionOutgoing::sendQueuedDatagram(
         flags |= protocol::kSeqCompMask;
     }
 
-    // Skip over the timestamp
+    // Write the timestamp
     const uint64_t nowUsec = siamese::GetTimeUsec();
     const uint32_t timestamp24 = (uint32_t)(nowUsec >> kTime23LostBits);
     siamese::WriteU24_LE(footer, timestamp24);
@@ -1213,7 +1213,7 @@ bool SessionOutgoing::PostDummyDatagram()
         flags |= protocol::kSeqCompMask;
     }
 
-    // Skip over the timestamp
+    // Write the timestamp
     const uint64_t nowUsec = siamese::GetTimeUsec();
     const uint32_t timestamp24 = (uint32_t)(nowUsec >> kTime23LostBits);
     siamese::WriteU24_LE(footer, timestamp24);
@@ -1347,7 +1347,7 @@ Result SessionOutgoing::PostRecovery(int& bytesSentOut)
         flags |= protocol::kSeqCompMask;
     }
 
-    // Skip over the timestamp
+    // Write the timestamp
     const uint64_t nowUsec = siamese::GetTimeUsec();
     const uint32_t timestamp24 = (uint32_t)(nowUsec >> kTime23LostBits);
     siamese::WriteU24_LE(footer, timestamp24);
