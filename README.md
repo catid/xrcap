@@ -22,11 +22,10 @@ I'm using the "C/C++" and "CMake Tools" extensions.
 
 Then I just hit the build button and it downloads and makes all the software with one click.
 
-The Azure Kinect SDK is required: https://github.com/microsoft/Azure-Kinect-Sensor-SDK
-Upgrading firmware on all the cameras is a good idea.
-
 
 ## How to use
+
+Upgrading firmware on all the cameras is a good idea.  Capture will not be allowed unless all the firmware versions match on the cameras.
 
 Run the `rendezvous_server` application and note the IP address it shows.
 
