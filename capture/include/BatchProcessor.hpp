@@ -39,7 +39,7 @@ namespace core {
 // Constants
 
 // Interval between keyframes in milliseconds
-static const int kKeyframeIntervalMsec = 2000;
+static const int kKeyframeIntervalMsec = 1000;
 
 // Time to hold slow warnings for
 static const unsigned kWarningHoldMsec = 1000;

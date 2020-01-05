@@ -85,7 +85,7 @@ void FileReader::Loop()
         std::lock_guard<std::mutex> locker(Lock);
 
         // Queue up one second worth of video
-        if (!PlaybackQueue || PlaybackQueue->GetQueueDepth() > 30) {
+        if (!PlaybackQueue || PlaybackQueue->GetQueueDepth() > 60) {
             continue;
         }
 
@@ -207,6 +207,7 @@ void FileReader::Loop()
                             for (int i = 0; i < 3; ++i) {
                                 frame_info->FrameHeader.Accelerometer[i] = frame_header->Accelerometer[i];
                             }
+                            //spdlog::info("Frame: {}:{} last={} BackReference={}", frame_info->Guid, frame_info->FrameHeader.CameraIndex, (int)frame_header->IsFinalFrame, frame_header->BackReference);
                             frame_info->FrameHeader.AutoWhiteBalanceUsec = frame_header->AutoWhiteBalanceUsec;
                             frame_info->FrameHeader.Brightness = frame_header->Brightness;
                             frame_info->FrameHeader.DepthBytes = frame_header->DepthBytes;
@@ -252,29 +253,55 @@ void FileReader::Loop()
     }
 }
 
-void FileReader::OnFrame(const std::shared_ptr<FrameInfo>& frame)
+void FileReader::OnFrame(const std::shared_ptr<FrameInfo>& input_frame)
 {
-    const unsigned camera_count = frame->BatchInfo->CameraCount;
-    if (Decoders.size() != camera_count)
+    const unsigned camera_count = input_frame->BatchInfo->CameraCount;
+    if (DecodingFrames.size() != camera_count)
     {
         Decoders.clear();
-        Decoders.resize(camera_count);
-
-        for (unsigned i = 0; i < camera_count; ++i) {
-            Decoders[i] = std::make_shared<DecoderPipeline>();
-        }
+        DecodingFrames.clear();
+        DecodingFrames.resize(camera_count);
+        DecodingFramesCount = 0;
     }
 
     //spdlog::info("{} Test: camera={} frame={} boot={}", "Reader", frame->FrameHeader.CameraIndex, frame->BatchInfo->FrameNumber, frame->BatchInfo->VideoBootUsec);
 
-    std::shared_ptr<DecodePipelineData> data = std::make_shared<DecodePipelineData>();
-    data->Input = frame;
-    data->Callback = [this](std::shared_ptr<DecodedFrame> decoded) {
-        PlaybackQueue->Insert(decoded);
-    };
+    spdlog::info("DecodingFramesCount={} DecodingFrames.size()={} IsFinalFrame={} : {}.{}",
+        DecodingFramesCount, DecodingFrames.size(), (int)input_frame->FrameHeader.IsFinalFrame,
+        input_frame->Guid, input_frame->FrameHeader.CameraIndex);
 
-    const unsigned camera_index = frame->FrameHeader.CameraIndex;
-    Decoders[camera_index]->Process(data);
+    const int index = DecodingFramesCount;
+    if (index < (int)DecodingFrames.size()) {
+        std::shared_ptr<DecodePipelineData> data = std::make_shared<DecodePipelineData>();
+        data->Input = input_frame;
+        data->Callback = [this](std::shared_ptr<DecodedFrame> decoded) {
+            PlaybackQueue->Insert(decoded);
+        };
+        DecodingFrames[index] = data;
+        ++DecodingFramesCount;
+    }
+
+    if (!input_frame->FrameHeader.IsFinalFrame) {
+        return;
+    }
+
+    for (int i = 0; i < DecodingFramesCount; ++i) {
+        auto& frame = DecodingFrames[i];
+        const GuidCameraIndex camera_guid(frame->Input->Guid, frame->Input->FrameHeader.CameraIndex);
+
+        spdlog::info("Frame {} : {}.{}", i, camera_guid.ServerGuid, camera_guid.CameraIndex);
+
+        auto& decoder = Decoders[camera_guid];
+        if (!decoder) {
+            decoder = std::make_shared<DecoderPipeline>();
+            Decoders[camera_guid] = decoder;
+        }
+
+        decoder->Process(frame);
+
+        DecodingFrames[i].reset();
+    }
+    DecodingFramesCount = 0;
 }
 
 void FileReader::GetPlaybackState(XrcapPlayback& playback_state)

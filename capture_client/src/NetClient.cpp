@@ -461,8 +461,9 @@ void CaptureConnection::OnFrameHeader(const protos::MessageFrameHeader& msg)
     Frame = std::make_shared<FrameInfo>();
 
 #if 0
-    spdlog::info("{} Receiving frame {} for camera {}/{} ImageBytes={} DepthBytes={}...", NetLocalName,
-        BatchInfo->FrameNumber, msg.CameraIndex, BatchInfo->CameraCount, msg.ImageBytes, msg.DepthBytes);
+    spdlog::info("{} Receiving frame {} final={} for camera {}:{}/{} BackRef={} ImageBytes={} DepthBytes={}...",
+        NetLocalName, msg.FrameNumber, (int)msg.IsFinalFrame, ServerGuid, msg.CameraIndex,
+        BatchInfo->CameraCount, msg.BackReference, msg.ImageBytes, msg.DepthBytes);
 #endif
 
     Frame->BatchInfo = BatchInfo;

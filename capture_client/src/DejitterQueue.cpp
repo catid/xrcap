@@ -244,7 +244,7 @@ std::shared_ptr<DecodedBatch> DejitterQueue::DequeueNext(int* sleep_msec)
         }
 
         // If we are playing back too slow:
-        float playback_speed = 1.1f;
+        float playback_speed = 1.0f;
         if ((unsigned)queued_time_usec > dejitter_queue_usec) {
             // Increase playback speed to keep the queue full.
             playback_speed = queued_time_usec / (float)dejitter_queue_usec;
@@ -307,7 +307,7 @@ std::shared_ptr<DecodedBatch> DejitterQueue::DequeueNext(int* sleep_msec)
         }
     }
 
-    //spdlog::warn("FIXME: {}", output->FrameNumber);
+    //spdlog::warn("Playing: frame={} time={}", output->FrameNumber, output->VideoBootUsec / 1000.f);
 
     return output;
 }
