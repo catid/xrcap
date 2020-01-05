@@ -68,8 +68,11 @@ protected:
 
     std::shared_ptr<DejitterQueue> PlaybackQueue;
 
-    // One decoder for each camera in the received batch
-    std::vector<std::shared_ptr<DecoderPipeline>> Decoders;
+    std::map<GuidCameraIndex, std::shared_ptr<DecoderPipeline>> Decoders;
+
+    // Frames queued up for each camera
+    std::vector<std::shared_ptr<DecodePipelineData>> DecodingFrames;
+    int DecodingFramesCount = 0;
 
     void Loop();
     void OnFrame(const std::shared_ptr<FrameInfo>& frame_info);

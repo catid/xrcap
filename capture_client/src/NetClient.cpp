@@ -407,7 +407,10 @@ void CaptureConnection::OnBatchInfo(const protos::MessageBatchInfo& msg)
     BatchInfo = std::make_shared<protos::MessageBatchInfo>(msg);
 
     // Convert boot time to local time
-    BatchInfo->VideoBootUsec = FromRemoteTime(BatchInfo->VideoBootUsec);
+    const uint64_t remote_usec = BatchInfo->VideoBootUsec;
+    BatchInfo->VideoBootUsec = FromRemoteTime(remote_usec);
+
+    //spdlog::info("TEST: {} - {} [{}]", remote_usec, BatchInfo->VideoBootUsec, NetLocalName);
 }
 
 void CaptureConnection::OnCalibration(const protos::MessageCalibration& msg)
@@ -458,8 +461,9 @@ void CaptureConnection::OnFrameHeader(const protos::MessageFrameHeader& msg)
     Frame = std::make_shared<FrameInfo>();
 
 #if 0
-    spdlog::info("{} Receiving frame {} for camera {}/{} ImageBytes={} DepthBytes={}...", NetLocalName,
-        BatchInfo->FrameNumber, msg.CameraIndex, BatchInfo->CameraCount, msg.ImageBytes, msg.DepthBytes);
+    spdlog::info("{} Receiving frame {} final={} for camera {}:{}/{} BackRef={} ImageBytes={} DepthBytes={}...",
+        NetLocalName, msg.FrameNumber, (int)msg.IsFinalFrame, ServerGuid, msg.CameraIndex,
+        BatchInfo->CameraCount, msg.BackReference, msg.ImageBytes, msg.DepthBytes);
 #endif
 
     Frame->BatchInfo = BatchInfo;

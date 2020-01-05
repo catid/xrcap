@@ -248,8 +248,9 @@ void ViewerConnection::OnTick(
         }
     }
 
-    auto status = GetStatus();
-    if (status.ReliableQueueMsec < 1000)
+    // FIXME: Seems to have the wrong estimate
+    //auto status = GetStatus();
+    //if (status.ReliableQueueMsec < 1000)
     {
         std::shared_ptr<ImageBatch> batch;
         {
@@ -548,7 +549,7 @@ void ViewerConnection::QueueBatch(std::shared_ptr<ImageBatch> batch)
     if (Batches.size() >= 30) {
         auto status = GetStatus();
         spdlog::error("Client connection too slow: BPS={} RelQMsec={}", status.AppBPS, status.ReliableQueueMsec);
-        //return;
+        return;
     }
     Batches.push_back(batch);
 }
