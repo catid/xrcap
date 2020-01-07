@@ -5,6 +5,7 @@ Allows multiple cameras on several Capture Servers on a 5 GHz wireless LAN to st
 
 It supports password-based security, and the video data sent from capture server to viewer is encrypted.  The recorded data is not currently encrypted.
 
+Here's an example playback of a 3-camera recording using this toolset: https://youtu.be/bPHLcOLTEV8
 
 ## Known Issues
 
