@@ -381,7 +381,7 @@ void CaptureFrontend::StartRender()
     table[NK_COLOR_BORDER] = nk_rgba(140, 159, 173, 255);
     table[NK_COLOR_BUTTON] = nk_rgba(137, 182, 255, 255);
     table[NK_COLOR_BUTTON_HOVER] = nk_rgba(142, 187, 229, 255);
-    table[NK_COLOR_BUTTON_ACTIVE] = nk_rgba(147, 192, 234, 255);
+    table[NK_COLOR_BUTTON_ACTIVE] = nk_rgba(0, 0, 0, 255);
     table[NK_COLOR_TOGGLE] = nk_rgba(177, 210, 210, 255);
     table[NK_COLOR_TOGGLE_HOVER] = nk_rgba(182, 215, 215, 255);
     table[NK_COLOR_TOGGLE_CURSOR] = nk_rgba(137, 182, 224, 255);
@@ -439,7 +439,7 @@ void CaptureFrontend::SetupUI()
     nk_glfw3_new_frame();
 
     struct nk_rect bounds{};
-    if (nk_begin_titled(ctx, "Network", "Network Status", nk_rect(10, 10, 450, 270),
+    if (nk_begin_titled(ctx, "Network", "Network Status", nk_rect(10, 10, 450, 280),
         NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
         NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
     {
@@ -483,6 +483,7 @@ void CaptureFrontend::SetupUI()
         UiPassword = password;
 
         nk_layout_row_dynamic(ctx, 20, 1);
+        MultiServerCheckValue = NextSettings.EnableMultiServers ? 1 : 0;
         nk_checkbox_label(ctx, "Use Multiple Capture Servers", &MultiServerCheckValue);
         NextSettings.EnableMultiServers = MultiServerCheckValue != 0;
 
