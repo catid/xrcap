@@ -20,6 +20,8 @@ The software requires an Intel Windows PC to build.
 
 Visual Studio 2019 (community edition might work) is required: https://visualstudio.microsoft.com/vs/
 
+The Windows 10 SDK is required: https://developer.microsoft.com/en-US/windows/downloads/windows-10-sdk
+
 CMake is required: https://github.com/Kitware/CMake/releases/download/v3.16.2/cmake-3.16.2-win64-x64.msi
 
 Check out a copy of the code and then run CMake.  Specify the source folder at the top (e.g. `C:/git/xrcap`) and an "out of source" build by setting Where to build the binaries: `C:/git/xrcap/build`.
