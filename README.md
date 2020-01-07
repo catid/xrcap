@@ -5,6 +5,7 @@ Allows multiple cameras on several Capture Servers on a 5 GHz wireless LAN to st
 
 It supports password-based security, and the video data sent from capture server to viewer is encrypted.  The recorded data is not currently encrypted.
 
+Here's an example playback of a 3-camera recording using this toolset: https://youtu.be/bPHLcOLTEV8
 
 ## Known Issues
 
@@ -29,8 +30,6 @@ Check out a copy of the code and then run CMake.  Specify the source folder at t
 Click `Configure` and specify Visual Studio 2019.  Then wait for a while as the configure script downloads and builds dependencies, which may take about 30 minutes.
 
 Then click `Generate` and `Open Project`.  From VS2019 select `Release` mode at the top and hit build.
-
-The built applications will crash on startup unless the working directory is correct.  An easy fix is to double-click the built executables under e.g. `C:\git\xrcap\build\viewer\Release`.
 
 I've mainly been doing development from VSCode using the CMake Tools extension, which is a bit better for code editing.
 
