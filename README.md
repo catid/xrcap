@@ -30,8 +30,6 @@ Click `Configure` and specify Visual Studio 2019.  Then wait for a while as the 
 
 Then click `Generate` and `Open Project`.  From VS2019 select `Release` mode at the top and hit build.
 
-The built applications will crash on startup unless the working directory is correct.  An easy fix is to double-click the built executables under e.g. `C:\git\xrcap\build\viewer\Release`.
-
 I've mainly been doing development from VSCode using the CMake Tools extension, which is a bit better for code editing.
 
 ## How to use
