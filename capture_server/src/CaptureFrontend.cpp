@@ -363,11 +363,13 @@ void CaptureFrontend::StartRender()
     NuklearContext = nk_glfw3_init(Window, NK_GLFW3_DEFAULT/*NK_GLFW3_INSTALL_CALLBACKS*/);
     nk_context* ctx = NuklearContext;
 
+    std::string font_path = GetFullFilePathFromRelative("FiraCode-Retina.ttf");
+
     struct nk_font_atlas *atlas;
     nk_glfw3_font_stash_begin(&atlas);
     struct nk_font *firacode = nk_font_atlas_add_from_file(
         atlas,
-        "FiraCode-Retina.ttf",
+        font_path.c_str(),
         16,
         0);
     nk_glfw3_font_stash_end();

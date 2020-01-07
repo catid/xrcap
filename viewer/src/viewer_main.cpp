@@ -31,8 +31,15 @@ int main(int argc, char* argv[])
 
     spdlog::info("Viewer application");
 
+    std::string file_path;
+    if (argc >= 2) {
+        file_path = argv[1];
+    }
+
     ViewerWindow window;
-    window.Initialize();
+    window.Initialize(file_path);
+
+    std::signal(SIGINT, SignalHandler);
 
     while (!window.IsTerminated() && !Terminated) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

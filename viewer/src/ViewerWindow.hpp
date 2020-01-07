@@ -37,7 +37,7 @@ enum class CalibrationState
 class ViewerWindow
 {
 public:
-    void Initialize();
+    void Initialize(const std::string& file_path);
     void Shutdown();
 
     bool IsTerminated() const

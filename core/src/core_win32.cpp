@@ -205,7 +205,7 @@ std::string GetFullFilePathFromRelative(const char* libraryFileNameWithExt)
         return libraryFileNameWithExt;
     }
 
-    // Find first slash in the path
+    // Find final slash in the path
     for (DWORD ii = length - 1; ii > 0; --ii)
     {
         if (path[ii] == '\\' || path[ii] == '/')

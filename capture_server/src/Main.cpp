@@ -24,8 +24,6 @@ int main(int argc, char* argv[])
 {
     CORE_UNUSED2(argc, argv);
 
-    std::signal(SIGINT, SignalHandler);
-
     SetupAsyncDiskLog(GetLogFilePath("xrcap", "capture_server"));
 
     SetTonkLogCallback([](const std::string& msg) {
@@ -36,6 +34,8 @@ int main(int argc, char* argv[])
 
     CaptureFrontend frontend;
     frontend.Initialize();
+
+    std::signal(SIGINT, SignalHandler);
 
     while (!frontend.IsTerminated() && !Terminated) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

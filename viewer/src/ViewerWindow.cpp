@@ -4,6 +4,7 @@
 
 #include <core_logging.hpp>
 #include <core_string.hpp>
+#include <core_win32.hpp>
 
 #include <nfd.h> // nativefiledialog library
 
@@ -20,13 +21,20 @@ namespace core {
 //------------------------------------------------------------------------------
 // ViewerWindow
 
-void ViewerWindow::Initialize()
+void ViewerWindow::Initialize(const std::string& file_path)
 {
     Terminated = false;
     Thread = std::make_shared<std::thread>(&ViewerWindow::Loop, this);
 
     if (!LoadFromFile(GetSettingsFilePath("xrcap", CAPTURE_VIEWER_DEFAULT_SETTINGS), Settings)) {
         spdlog::warn("Failed to load settings from previous session");
+    }
+
+    if (!file_path.empty()) {
+        if (xrcap_playback_read_file(file_path.c_str())) {
+            IsLivePlayback = false;
+            IsFileOpen = true;
+        }
     }
 }
 
@@ -246,11 +254,13 @@ void ViewerWindow::StartRender()
     NuklearContext = nk_glfw3_init(Window, NK_GLFW3_DEFAULT/*NK_GLFW3_INSTALL_CALLBACKS*/);
     nk_context* ctx = NuklearContext;
 
+    std::string font_path = GetFullFilePathFromRelative("FiraCode-Retina.ttf");
+
     struct nk_font_atlas *atlas;
     nk_glfw3_font_stash_begin(&atlas);
     struct nk_font *firacode = nk_font_atlas_add_from_file(
         atlas,
-        "FiraCode-Retina.ttf",
+        font_path.c_str(),
         20,
         0);
     nk_glfw3_font_stash_end();
