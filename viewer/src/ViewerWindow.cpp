@@ -277,7 +277,7 @@ void ViewerWindow::StartRender()
     table[NK_COLOR_BUTTON_ACTIVE] = nk_rgba(0, 0, 0, 255);
     table[NK_COLOR_TOGGLE] = nk_rgba(177, 210, 210, 255);
     table[NK_COLOR_TOGGLE_HOVER] = nk_rgba(182, 215, 215, 255);
-    table[NK_COLOR_TOGGLE_CURSOR] = nk_rgba(137, 182, 224, 255);
+    table[NK_COLOR_TOGGLE_CURSOR] = nk_rgba(0, 0, 0, 255);
     table[NK_COLOR_SELECT] = nk_rgba(177, 210, 210, 255);
     table[NK_COLOR_SELECT_ACTIVE] = nk_rgba(137, 182, 224, 255);
     table[NK_COLOR_SLIDER] = nk_rgba(177, 210, 210, 255);
