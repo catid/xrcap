@@ -5,6 +5,7 @@ Allows multiple cameras on several Capture Servers on a 5 GHz wireless LAN to st
 
 It supports password-based security, and the video data sent from capture server to viewer is encrypted.  The recorded data is not currently encrypted.
 
+
 ## Known Issues
 
 Lots of bugs everywhere.  Mainly releasing this so people have access to the code, but I don't think it's ready for a binary release yet.
@@ -12,20 +13,28 @@ Lots of bugs everywhere.  Mainly releasing this so people have access to the cod
 Currently the software only uses the Intel video encoder built into Intel CPUs.
 On computers with a GPU some additional setup needs to be done: https://twitter.com/MrCatid/status/1181772132373520385
 
+
 ## How to build
 
-You'll need Visual Studio Code: https://code.visualstudio.com/
+The software requires an Intel Windows PC to build.
 
-You'll also need CMake and a copy of Visual Studio (community edition might work) installed.
+Visual Studio 2019 (community edition might work) is required: https://visualstudio.microsoft.com/vs/
 
-I'm using the "C/C++" and "CMake Tools" extensions.
+CMake is required: https://github.com/Kitware/CMake/releases/download/v3.16.2/cmake-3.16.2-win64-x64.msi
 
-Then I just hit the build button and it downloads and makes all the software with one click.
+Check out a copy of the code and then run CMake.  Specify the source folder at the top (e.g. `C:/git/xrcap`) and an "out of source" build by setting Where to build the binaries: `C:/git/xrcap/build`.
 
+Click `Configure` and specify Visual Studio 2019.  Then wait for a while as the configure script downloads and builds dependencies, which may take about 30 minutes.
+
+Then click `Generate` and `Open Project`.  From VS2019 select `Release` mode at the top and hit build.
+
+The built applications will crash on startup unless the working directory is correct.  An easy fix is to double-click the built executables under e.g. `C:\git\xrcap\build\viewer\Release`.
+
+I've mainly been doing development from VSCode using the CMake Tools extension, which is a bit better for code editing.
 
 ## How to use
 
-Upgrading firmware on all the cameras is a good idea.  Capture will not be allowed unless all the firmware versions match on the cameras.
+Upgrading firmware on all the cameras is a good idea.  Capture will not be allowed unless all the firmware versions match.  See the end of this document for a guide.
 
 Run the `rendezvous_server` application and note the IP address it shows.
 
@@ -49,24 +58,6 @@ Next switch the mode to `CaptureHighQ` and you'll be able to press the `m` key a
 To calibrate lighting between the cameras, use the Configuration panel.  First set a clip region of interest, which is centered around where the April tag was located.  Then use the Lock Lighting feature and Calibrate Lighting to normalize the brightness and saturation for all the cameras in this clip region.
 
 Now you're ready to capture!  You can use the Recording panel to record to a file and the Playback panel to load the file back in to view it.
-
-## Install Pointcloud Library
-
-If this is required for some reason:
-
-Download the 64-bit installer from:
-https://github.com/PointCloudLibrary/pcl/releases/tag/pcl-1.9.1
-
-
-## Install OpenCV under this directory
-
-If this is required for some reason:
-
-Download latest Windows version:
-https://sourceforge.net/projects/opencvlibrary/files/opencv-win/
-
-Copy the opencv folder it extracts to this folder, so there is
-this folder structure: `xrcap/opencv/build/` and `xrcap/opencv/sources/`
 
 
 ## How to upgrade Azure Kinect DK firmware
