@@ -79,3 +79,38 @@ https://docs.microsoft.com/en-us/azure/kinect-dk/update-device-firmware
 5. Run the firmware tool to verify:
 
 `AzureKinectFirmwareTool.exe -q`
+
+
+## Hardware recommendations
+
+Hardware shared by all cameras:
++ 1x Central sync hub for all the cameras: https://www.amazon.com/gp/product/B01L7HX4XY/
++ 1x Power strip with 4 USB3 power ports: https://www.amazon.com/gp/product/B075L2T347/
+
+For each camera to add to the rig:
+
++ 2x USB3 extension cables (power + data): https://www.amazon.com/gp/product/B00AA0U08M/
++ 1x USB-C to USB3 adapter if needed: https://www.amazon.com/gp/product/B01GGKYS6E/
++ 1x Tripod with adjustable height: https://www.amazon.com/gp/product/B0772WLSHZ/
++ 1x Multi-camera sync in/out cable: https://www.amazon.com/gp/product/B004JWIPKM/
++ 1x Table-top tripod with a ballhead mount that allows for side-ways cameras: https://www.amazon.com/gp/product/B07L3RN7ZK/
+
+
+## Multi-camera setup guidelines:
+
+Turning the cameras 90 degrees is a good idea because it allows the cameras to get closer to the subjects (more pixels on target), so getting a ballhead allowing that is recommended.  The extrinsics calibration currently requires the cameras to all be turned the same way, either all tilted right or all tilted left (FIXME).
+
+Each camera needs a power USB3 and a data USB3 and one sync (in/out) cable.  I've found it's helpful to weave the sync cable between the other two cables to make the bundle more tidy, and then zip-tie the cables together at about 10 or so points.  All the sync cables plug into the sync hub linked above.
+
+One of the cameras needs a sync out (master) and the others need sync in cable connected.
+
+Still working on these guidelines: Distance from subject of about 4-5 meters seems like a good rule of thumb for a single subject.  Three cameras seems suitable for one subject, and four seems required for two subjects sitting across from eachother.  You'll probably want one of the cameras positioned farther above the subject to catch more of their hair because that's often hard for the depth cameras to capture.
+
+
+## Credits
+
+Inspired by discussion with Moeti : Author of Sensor Stream Pipe ( https://github.com/moetsi/Sensor-Stream-Pipe )
+
+Software by Christopher A. Taylor mrcatid@gmail.com
+
+Please reach out if you need support or would like to collaborate on a project.
