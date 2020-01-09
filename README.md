@@ -83,7 +83,14 @@ https://docs.microsoft.com/en-us/azure/kinect-dk/update-device-firmware
 
 ## Hardware recommendations
 
-Hardware shared by all cameras:
+The sync recommendations from Microsoft are documented here: https://support.microsoft.com/en-us/help/4494429/sync-multiple-azure-kinect-dk-devices
+
+For up to 3 devices you can use a convenient "star" topology with a central sync hub.  For 4+ devices, they recommend daisy-chaining.
+
+The links below are for hardware that has worked well for me.
+
+Equipment shared by all cameras:
+
 + 1x Central sync hub for all the cameras: https://www.amazon.com/gp/product/B01L7HX4XY/
 + 1x Power strip with 4 USB3 power ports: https://www.amazon.com/gp/product/B075L2T347/
 
@@ -96,13 +103,13 @@ For each camera to add to the rig:
 + 1x Table-top tripod with a ballhead mount that allows for side-ways cameras: https://www.amazon.com/gp/product/B07L3RN7ZK/
 
 
-## Multi-camera setup guidelines:
+## Multi-camera setup guidelines
 
 Tilting each camera 90 degrees is a good idea because it allows the cameras to get closer to the subjects (more pixels on target), so getting a ballhead allowing that is recommended.  The extrinsics calibration currently requires the cameras to all be turned the same way, either all tilted right or all tilted left (FIXME).
 
-Each camera needs a power USB3 and a data USB3 and one sync (in/out) cable.  I've found it's helpful to weave the sync cable between the other two cables to make the bundle more tidy, and then zip-tie the cables together at about 10 or so points.  All the sync cables plug into the sync hub linked above.
+Each camera needs a power USB3 and a data USB3 and one sync (in/out) cable.  I've found it's helpful to weave the cables to make the bundle more tidy, and then zip-tie the cables together at about 10 or so points.
 
-One of the cameras needs a sync out (master) and the others need sync in cable connected.
+One of the cameras needs a sync out (master) and the others need sync in cable connected.  This part varies for star versus daisy-chain.
 
 Still working on these guidelines: Distance from subject of about 4-5 meters seems like a good rule of thumb for a single subject.  Three cameras seems suitable for one subject, and four seems required for two subjects sitting across from eachother.  You'll probably want one of the cameras positioned farther above the subject to catch more of their hair because that's often hard for the depth cameras to capture.
 
