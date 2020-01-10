@@ -100,15 +100,7 @@ find_package(Threads REQUIRED)
 
 
 ################################################################################
-# Subprojects
-
-# Leaf dependencies
-if (NOT TARGET core)
-    add_subdirectory(core core)
-endif()
-if (NOT TARGET depthengine)
-    add_subdirectory(depthengine depthengine)
-endif()
+# Thirdparty Libraries
 
 if (NOT TARGET sodium)
     add_subdirectory(thirdparty/sodium sodium)
@@ -147,9 +139,36 @@ if (NOT TARGET rapidjson)
     add_subdirectory(thirdparty/rapidjson rapidjson)
 endif()
 
-if (NOT TARGET glad)
-    add_subdirectory(glad glad)
+
+################################################################################
+# Firstparty Libraries
+
+# Leaf dependencies
+if (NOT TARGET core)
+    add_subdirectory(libraries/core core)
 endif()
+if (NOT TARGET depthengine)
+    add_subdirectory(libraries/depthengine depthengine)
+endif()
+if (NOT TARGET glad)
+    add_subdirectory(libraries/glad glad)
+endif()
+if (NOT TARGET tonk)
+    add_subdirectory(libraries/tonk tonk)
+endif()
+if (NOT TARGET depth_mesh)
+    add_subdirectory(libraries/depth_mesh depth_mesh)
+endif()
+if (NOT TARGET capture_protocol)
+    add_subdirectory(libraries/capture_protocol capture_protocol)
+endif()
+if (NOT TARGET capture)
+    add_subdirectory(libraries/capture capture)
+endif()
+
+
+################################################################################
+# Video Codecs
 
 if (NOT TARGET nvcuvid)
     add_subdirectory(codecs/nvcuvid nvcuvid)
@@ -167,37 +186,23 @@ if (NOT TARGET zdepth)
     add_subdirectory(codecs/zdepth zdepth)
 endif()
 
-if (NOT TARGET tonk)
-    add_subdirectory(tonk tonk)
-endif()
-
-if (NOT TARGET depth_mesh)
-    add_subdirectory(depth_mesh depth_mesh)
-endif()
-
-if (NOT TARGET capture_protocol)
-    add_subdirectory(capture_protocol capture_protocol)
-endif()
-if (NOT TARGET capture)
-    add_subdirectory(capture capture)
-endif()
-
-if (NOT TARGET capture_client_igpu)
-    add_subdirectory(capture_client capture_client)
-endif()
-if (NOT TARGET rendezvous_server)
-    add_subdirectory(rendezvous_server rendezvous_server)
-endif()
-
-if (NOT TARGET capture_server)
-    add_subdirectory(capture_server capture_server)
-endif()
-
 
 ################################################################################
-# Targets
+# Apps
 
-add_subdirectory(viewer)
+if (NOT TARGET capture_client_igpu)
+    add_subdirectory(apps/capture_client capture_client)
+endif()
+if (NOT TARGET rendezvous_server)
+    add_subdirectory(apps/rendezvous_server rendezvous_server)
+endif()
+if (NOT TARGET capture_server)
+    add_subdirectory(apps/capture_server capture_server)
+endif()
+if (NOT TARGET viewer)
+    add_subdirectory(apps/viewer viewer)
+endif()
+
 
 
 # Print all variables?
