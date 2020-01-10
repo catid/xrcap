@@ -1,0 +1,74 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Tonk Unit Tester",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/tonk/tonk_tests.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/tonk",
+            "environment": [],
+            "externalConsole": true
+        },
+        {
+            "name": "Rendezvous Server",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/rendezvous_server/rendezvous_server.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/rendezvous_server",
+            "environment": [],
+            "externalConsole": true
+        },
+        {
+            "name": "MFX Test",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/mfx_codecs/mfx_test.exe",
+            "args": ["D:/jpeg/test.mjpg"],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/mfx_codecs",
+            "environment": [],
+            "externalConsole": true
+        },
+        {
+            "name": "Depth Mesh Test",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/depth_mesh/depth_mesh_tests.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/depth_mesh",
+            "environment": [],
+            "externalConsole": true
+        },
+        {
+            "name": "Viewer",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/viewer/viewer.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/viewer",
+            "environment": [],
+            "externalConsole": true
+        },
+        {
+            "name": "Capture Server",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/capture_server/capture_server.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/build/capture_server",
+            "environment": [],
+            "externalConsole": true
+        }
+    ]
+}
