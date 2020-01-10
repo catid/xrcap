@@ -73,6 +73,12 @@ endif()
 ################################################################################
 # Dependencies
 
+# Use exact version of spdlog because k4a includes a different version
+find_package(spdlog 1.3.1 EXACT
+    PATHS
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/spdlog/lib/cmake/spdlog"
+    REQUIRED)
+
 find_package(mimalloc 1.0 EXACT
     PATHS
         "${CMAKE_SOURCE_DIR}/thirdparty/bin/mimalloc/lib/mimalloc-1.0/cmake"
@@ -89,23 +95,8 @@ find_package(k4a 1.3.0 EXACT
     REQUIRED
 )
 
-# Use exact version of spdlog because k4a includes a different version
-find_package(spdlog 1.3.1 EXACT
-    PATHS
-        "${CMAKE_SOURCE_DIR}/thirdparty/bin/spdlog/lib/cmake/spdlog"
-    REQUIRED)
-
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-
-
-################################################################################
-# Common Tools
-
-# Must come first because it defines our version of spdlog
-if (NOT TARGET core)
-    add_subdirectory(libraries/core core)
-endif()
 
 
 ################################################################################
@@ -152,6 +143,9 @@ endif()
 ################################################################################
 # Firstparty Libraries
 
+if (NOT TARGET core)
+    add_subdirectory(libraries/core core)
+endif()
 if (NOT TARGET depthengine)
     add_subdirectory(libraries/depthengine depthengine)
 endif()
