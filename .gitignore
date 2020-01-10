@@ -36,3 +36,4 @@ thirdparty/bin/*
 thirdparty/build/*
 thirdparty/src/*
 build/*
+.vscode/*

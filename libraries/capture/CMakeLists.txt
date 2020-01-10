@@ -54,12 +54,11 @@ install(TARGETS capture DESTINATION lib)
 
 # capture_test app
 
+# Disabled for now
+return()
+
 add_executable(capture_test test/capture_test.cpp)
-
-target_link_libraries(capture_test
-    capture
-)
-
+target_link_libraries(capture_test capture)
 install(TARGETS capture_test DESTINATION bin)
 
 
