@@ -7,7 +7,7 @@ It supports password-based security, and the video data sent from capture server
 
 Here's an example playback of a 3-camera recording using this toolset: https://youtu.be/bPHLcOLTEV8
 
-## Known Issues
+## Known issues
 
 Lots of bugs everywhere.  Mainly releasing this so people have access to the code, but I don't think it's ready for a binary release yet.
 
@@ -17,7 +17,7 @@ On computers with a GPU some additional setup needs to be done: https://twitter.
 
 ## How to build
 
-The software requires an Intel Windows PC to build.
+The software requires about 10 minutes on an Intel Windows PC to build.
 
 Visual Studio 2019 (community edition might work) is required: https://visualstudio.microsoft.com/vs/
 

@@ -14,13 +14,13 @@ find_library(TURBOJPEG_LIB
         # turbojpeg.lib for dynamic linkage
         turbojpeg
     HINTS
-        ${CMAKE_SOURCE_DIR}/extern/bin/jpegturbo/lib/
+        ${CMAKE_SOURCE_DIR}/thirdparty/bin/jpegturbo/lib/
     NO_CMAKE_SYSTEM_PATH
 )
 
 find_path(TURBOJPEG_INCLUDE_DIRS turbojpeg.h
     PATHS
-        ${CMAKE_SOURCE_DIR}/extern/bin/jpegturbo/include/
+        ${CMAKE_SOURCE_DIR}/thirdparty/bin/jpegturbo/include/
     REQUIRED
 )
 
@@ -32,7 +32,7 @@ find_library(TURBOJPEG_DYNLIB MODULE
         # turbojpeg.dll for dynamic linkage
         turbojpeg
     HINTS
-        ${CMAKE_SOURCE_DIR}/extern/bin/jpegturbo/bin/
+        ${CMAKE_SOURCE_DIR}/thirdparty/bin/jpegturbo/bin/
     NO_CMAKE_SYSTEM_PATH
 )
 

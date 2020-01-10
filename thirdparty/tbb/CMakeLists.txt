@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(yaml CXX)
+project(tbb CXX)
 
 include_directories(include)
 
@@ -15,34 +15,33 @@ else()
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".a")
 endif()
 
-find_library(YAML_STATIC_LIB MODULE
+find_library(TBB_STATIC_LIB MODULE
     NAMES
-        libyaml-cppmd
-        libyaml-cppmdd
-        libyaml-cpp
+        "tbb_static"
     HINTS
-        "${CMAKE_SOURCE_DIR}/extern/bin/yaml-cpp/lib/"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/tbb/lib/"
     NO_CMAKE_SYSTEM_PATH
     REQUIRED
 )
 
-find_path(YAML_INCLUDE_DIR
+find_path(TBB_INCLUDE_DIR
     NAMES
-        yaml-cpp/yaml.h
+        tbb/tbb.h
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/yaml-cpp/include"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/tbb/include"
     REQUIRED
 )
 
-message("YAML_INCLUDE_DIR: ${YAML_INCLUDE_DIR}")
-message("YAML_STATIC_LIB: ${YAML_STATIC_LIB}")
+message("TBB_INCLUDE_DIR: ${TBB_INCLUDE_DIR}")
+message("TBB_STATIC_LIB: ${TBB_STATIC_LIB}")
 
 
 ################################################################################
 # Targets
 
-# yaml library
+# tbb library
 
-add_library(yaml INTERFACE)
-target_include_directories(yaml INTERFACE ${YAML_INCLUDE_DIR})
-target_link_libraries(yaml INTERFACE ${YAML_STATIC_LIB})
+add_library(tbb INTERFACE)
+target_include_directories(tbb INTERFACE ${TBB_INCLUDE_DIR})
+target_link_libraries(tbb INTERFACE ${TBB_STATIC_LIB})
+target_compile_definitions(tbb INTERFACE __TBB_NO_IMPLICIT_LINKAGE=1)

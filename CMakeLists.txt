@@ -46,11 +46,11 @@ ENDIF(MSVC)
 # If dependencies are not downloaded/built yet:
 find_package(k4a
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/azurekinectsdk/lib/cmake/k4a"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/azurekinectsdk/lib/cmake/k4a"
 )
 if (NOT k4a_FOUND)
-    set(EXTERN_DIR ${CMAKE_SOURCE_DIR}/extern)
-    file(MAKE_DIRECTORY ${EXTERN_DIR}/build)
+    set(THIRDPARTY_DIR ${CMAKE_SOURCE_DIR}/thirdparty)
+    file(MAKE_DIRECTORY ${THIRDPARTY_DIR}/build)
 
     # "cd build"
     # "cmake -DCMAKE_BUILD_TYPE=Release .."
@@ -59,13 +59,13 @@ if (NOT k4a_FOUND)
         COMMAND
             ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ..
         WORKING_DIRECTORY
-            ${EXTERN_DIR}/build
+            ${THIRDPARTY_DIR}/build
     )
     execute_process(
         COMMAND
             ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
         WORKING_DIRECTORY
-            ${EXTERN_DIR}/build
+            ${THIRDPARTY_DIR}/build
     )
 endif()
 
@@ -73,129 +73,135 @@ endif()
 ################################################################################
 # Dependencies
 
+# Use exact version of spdlog because k4a includes a different version
+find_package(spdlog 1.3.1 EXACT
+    PATHS
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/spdlog/lib/cmake/spdlog"
+    REQUIRED)
+
 find_package(mimalloc 1.0 EXACT
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/mimalloc/lib/mimalloc-1.0/cmake"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/mimalloc/lib/mimalloc-1.0/cmake"
     REQUIRED
 )
 find_package(glfw3 3.3.0 EXACT
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/glfw/lib/cmake"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/glfw/lib/cmake"
     REQUIRED
 )
 find_package(k4a 1.3.0 EXACT
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/azurekinectsdk/lib/cmake/k4a"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/azurekinectsdk/lib/cmake/k4a"
     REQUIRED
 )
-
-# Use exact version of spdlog because k4a includes a different version
-find_package(spdlog 1.3.1 EXACT
-    PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/spdlog/lib/cmake/spdlog"
-    REQUIRED)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 
 ################################################################################
-# Subprojects
+# Thirdparty Libraries
 
-# Leaf dependencies
 if (NOT TARGET sodium)
-    add_subdirectory(sodium sodium)
-endif()
-if (NOT TARGET core)
-    add_subdirectory(core core)
+    add_subdirectory(thirdparty/sodium sodium)
 endif()
 if (NOT TARGET vectormath)
-    add_subdirectory(vectormath vectormath)
+    add_subdirectory(thirdparty/vectormath vectormath)
 endif()
 if (NOT TARGET nuklear)
-    add_subdirectory(nuklear nuklear)
+    add_subdirectory(thirdparty/nuklear nuklear)
 endif()
 if (NOT TARGET jpegturbo)
-    add_subdirectory(jpegturbo jpegturbo)
+    add_subdirectory(thirdparty/jpegturbo jpegturbo)
 endif()
 if (NOT TARGET tbb)
-    add_subdirectory(tbb tbb)
+    add_subdirectory(thirdparty/tbb tbb)
 endif()
 if (NOT TARGET open3d)
-    add_subdirectory(open3d open3d)
-endif()
-if (NOT TARGET depthengine)
-    add_subdirectory(depthengine depthengine)
+    add_subdirectory(thirdparty/open3d open3d)
 endif()
 if (NOT TARGET enoki)
-    add_subdirectory(enoki enoki)
+    add_subdirectory(thirdparty/enoki enoki)
 endif()
 if (NOT TARGET zstd)
-    add_subdirectory(zstd zstd)
+    add_subdirectory(thirdparty/zstd zstd)
 endif()
 if (NOT TARGET yaml)
-    add_subdirectory(yaml yaml)
+    add_subdirectory(thirdparty/yaml yaml)
 endif()
 if (NOT TARGET nfd)
-    add_subdirectory(nfd nfd)
+    add_subdirectory(thirdparty/nfd nfd)
 endif()
-
-if (NOT TARGET glad)
-    add_subdirectory(glad glad)
-endif()
-
 if (NOT TARGET apriltag)
-    add_subdirectory(apriltag apriltag)
+    add_subdirectory(thirdparty/apriltag apriltag)
 endif()
-
-if (NOT TARGET nvcuvid)
-    add_subdirectory(nvcuvid nvcuvid)
-endif()
-if (NOT TARGET nvcuvid_codecs)
-    add_subdirectory(nvcuvid_codecs nvcuvid_codecs)
-endif()
-
-if (NOT TARGET mfx)
-    add_subdirectory(mfx mfx)
-endif()
-if (NOT TARGET mfx_codecs)
-    add_subdirectory(mfx_codecs mfx_codecs)
-endif()
-
-if (NOT TARGET tonk)
-    add_subdirectory(tonk tonk)
-endif()
-
-if (NOT TARGET zdepth)
-    add_subdirectory(zdepth zdepth)
-endif()
-if (NOT TARGET depth_mesh)
-    add_subdirectory(depth_mesh depth_mesh)
-endif()
-
-if (NOT TARGET capture_protocol)
-    add_subdirectory(capture_protocol capture_protocol)
-endif()
-if (NOT TARGET capture)
-    add_subdirectory(capture capture)
-endif()
-
-if (NOT TARGET capture_client_igpu)
-    add_subdirectory(capture_client capture_client)
-endif()
-if (NOT TARGET rendezvous_server)
-    add_subdirectory(rendezvous_server rendezvous_server)
-endif()
-
-if (NOT TARGET capture_server)
-    add_subdirectory(capture_server capture_server)
+if (NOT TARGET rapidjson)
+    add_subdirectory(thirdparty/rapidjson rapidjson)
 endif()
 
 
 ################################################################################
-# Targets
+# Firstparty Libraries
 
-add_subdirectory(viewer)
+if (NOT TARGET core)
+    add_subdirectory(libraries/core core)
+endif()
+if (NOT TARGET depthengine)
+    add_subdirectory(libraries/depthengine depthengine)
+endif()
+if (NOT TARGET glad)
+    add_subdirectory(libraries/glad glad)
+endif()
+if (NOT TARGET tonk)
+    add_subdirectory(libraries/tonk tonk)
+endif()
+if (NOT TARGET depth_mesh)
+    add_subdirectory(libraries/depth_mesh depth_mesh)
+endif()
+if (NOT TARGET capture_protocol)
+    add_subdirectory(libraries/capture_protocol capture_protocol)
+endif()
+if (NOT TARGET capture)
+    add_subdirectory(libraries/capture capture)
+endif()
+
+
+################################################################################
+# Video Codecs
+
+if (NOT TARGET nvcuvid)
+    add_subdirectory(codecs/nvcuvid nvcuvid)
+endif()
+if (NOT TARGET nvcuvid_codecs)
+    add_subdirectory(codecs/nvcuvid_codecs nvcuvid_codecs)
+endif()
+if (NOT TARGET mfx)
+    add_subdirectory(codecs/mfx mfx)
+endif()
+if (NOT TARGET mfx_codecs)
+    add_subdirectory(codecs/mfx_codecs mfx_codecs)
+endif()
+if (NOT TARGET zdepth)
+    add_subdirectory(codecs/zdepth zdepth)
+endif()
+
+
+################################################################################
+# Apps
+
+if (NOT TARGET capture_client_igpu)
+    add_subdirectory(apps/capture_client capture_client)
+endif()
+if (NOT TARGET rendezvous_server)
+    add_subdirectory(apps/rendezvous_server rendezvous_server)
+endif()
+if (NOT TARGET capture_server)
+    add_subdirectory(apps/capture_server capture_server)
+endif()
+if (NOT TARGET viewer)
+    add_subdirectory(apps/viewer viewer)
+endif()
+
 
 
 # Print all variables?
