@@ -19,7 +19,7 @@ find_library(TBB_STATIC_LIB MODULE
     NAMES
         "tbb_static"
     HINTS
-        "${CMAKE_SOURCE_DIR}/extern/bin/tbb/lib/"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/tbb/lib/"
     NO_CMAKE_SYSTEM_PATH
     REQUIRED
 )
@@ -28,7 +28,7 @@ find_path(TBB_INCLUDE_DIR
     NAMES
         tbb/tbb.h
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/tbb/include"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/tbb/include"
     REQUIRED
 )
 

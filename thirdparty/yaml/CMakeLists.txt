@@ -21,7 +21,7 @@ find_library(YAML_STATIC_LIB MODULE
         libyaml-cppmdd
         libyaml-cpp
     HINTS
-        "${CMAKE_SOURCE_DIR}/extern/bin/yaml-cpp/lib/"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/yaml-cpp/lib/"
     NO_CMAKE_SYSTEM_PATH
     REQUIRED
 )
@@ -30,7 +30,7 @@ find_path(YAML_INCLUDE_DIR
     NAMES
         yaml-cpp/yaml.h
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/yaml-cpp/include"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/yaml-cpp/include"
     REQUIRED
 )
 

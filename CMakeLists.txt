@@ -46,11 +46,11 @@ ENDIF(MSVC)
 # If dependencies are not downloaded/built yet:
 find_package(k4a
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/azurekinectsdk/lib/cmake/k4a"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/azurekinectsdk/lib/cmake/k4a"
 )
 if (NOT k4a_FOUND)
-    set(EXTERN_DIR ${CMAKE_SOURCE_DIR}/extern)
-    file(MAKE_DIRECTORY ${EXTERN_DIR}/build)
+    set(THIRDPARTY_DIR ${CMAKE_SOURCE_DIR}/thirdparty)
+    file(MAKE_DIRECTORY ${THIRDPARTY_DIR}/build)
 
     # "cd build"
     # "cmake -DCMAKE_BUILD_TYPE=Release .."
@@ -59,13 +59,13 @@ if (NOT k4a_FOUND)
         COMMAND
             ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ..
         WORKING_DIRECTORY
-            ${EXTERN_DIR}/build
+            ${THIRDPARTY_DIR}/build
     )
     execute_process(
         COMMAND
             ${CMAKE_COMMAND} --build . --config ${CMAKE_BUILD_TYPE}
         WORKING_DIRECTORY
-            ${EXTERN_DIR}/build
+            ${THIRDPARTY_DIR}/build
     )
 endif()
 
@@ -75,24 +75,24 @@ endif()
 
 find_package(mimalloc 1.0 EXACT
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/mimalloc/lib/mimalloc-1.0/cmake"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/mimalloc/lib/mimalloc-1.0/cmake"
     REQUIRED
 )
 find_package(glfw3 3.3.0 EXACT
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/glfw/lib/cmake"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/glfw/lib/cmake"
     REQUIRED
 )
 find_package(k4a 1.3.0 EXACT
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/azurekinectsdk/lib/cmake/k4a"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/azurekinectsdk/lib/cmake/k4a"
     REQUIRED
 )
 
 # Use exact version of spdlog because k4a includes a different version
 find_package(spdlog 1.3.1 EXACT
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/spdlog/lib/cmake/spdlog"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/spdlog/lib/cmake/spdlog"
     REQUIRED)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)

@@ -3,7 +3,7 @@ project(open3d CXX)
 
 find_package(Open3D 0.8.0.0 EXACT
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/Open3D/CMake"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/Open3D/CMake"
     REQUIRED
 )
 

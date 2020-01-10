@@ -9,7 +9,7 @@ include_directories(include)
 
 find_package(rapidjson 1.1.0 EXACT
     PATHS
-        "${CMAKE_SOURCE_DIR}/extern/bin/rapidjson/cmake"
+        "${CMAKE_SOURCE_DIR}/thirdparty/bin/rapidjson/cmake"
     REQUIRED
 )
 

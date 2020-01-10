@@ -5,11 +5,11 @@ project(sodium CXX)
 ################################################################################
 # Source Files
 
-set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/extern/src/libsodium/src/libsodium/include")
+set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/thirdparty/src/libsodium/src/libsodium/include")
 
 file(GLOB_RECURSE SOURCE_FILES
     LIST_DIRECTORIES false
-    "${CMAKE_SOURCE_DIR}/extern/src/libsodium/src/libsodium/*.c"
+    "${CMAKE_SOURCE_DIR}/thirdparty/src/libsodium/src/libsodium/*.c"
 )
 
 ################################################################################
