@@ -100,6 +100,15 @@ find_package(Threads REQUIRED)
 
 
 ################################################################################
+# Common Tools
+
+# Must come first because it defines our version of spdlog
+if (NOT TARGET core)
+    add_subdirectory(libraries/core core)
+endif()
+
+
+################################################################################
 # Thirdparty Libraries
 
 if (NOT TARGET sodium)
@@ -143,10 +152,6 @@ endif()
 ################################################################################
 # Firstparty Libraries
 
-# Leaf dependencies
-if (NOT TARGET core)
-    add_subdirectory(libraries/core core)
-endif()
 if (NOT TARGET depthengine)
     add_subdirectory(libraries/depthengine depthengine)
 endif()
