@@ -11,6 +11,8 @@ set(VIEWER_SOURCE_FILES
     src/viewer_main.cpp
     src/ViewerSettings.hpp
     src/ViewerSettings.cpp
+    src/GltfWriter.hpp
+    src/GltfWriter.cpp
 )
 
 
@@ -30,6 +32,7 @@ target_link_libraries(viewer PRIVATE
     yaml
     depth_mesh
     nfd # nativefiledialog: Portable file open dialog
+    rapidjson
 )
 
 install(TARGETS viewer DESTINATION bin)

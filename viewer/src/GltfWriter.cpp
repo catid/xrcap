@@ -2,6 +2,9 @@
 
 #include "GltfWriter.hpp"
 
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
+
 #include <sstream>
 #include <fstream>
 
@@ -167,24 +170,24 @@ bool WriteFrameToGlbFile(const XrcapFrame& frame, const char* file_path)
     json << "            \"byteOffset\": 0" << std::endl;
     json << "        }," << std::endl;
     json << "        {" << std::endl;
-                "buffer": 0,
-                "byteLength": 512,
-                "byteStride": 20,
-                "byteOffset": 12
-            },
-            {
-                "buffer": 1,
-                "byteLength": 10242,
-                "byteStride": 4
-                "byteOffset": 0,
-            }
-        ],
-        "images": [
-            {
-                "bufferView": 2,
-                "mimeType": "image/jpeg" 
-            }
-        ],
+    json << "            \"buffer\": 0," << std::endl;
+    json << "            \"byteLength\": " << 512 << "," << std::endl;
+    json << "            \"byteStride\": " << 20 << "," << std::endl;
+    json << "            \"byteOffset\": " << 12 << std::endl;
+    json << "        }," << std::endl;
+    json << "        {" << std::endl;
+    json << "            \"buffer\": 1," << std::endl;
+    json << "            \"byteLength\": " << 10242 << "," << std::endl;
+    json << "            \"byteStride\": " << 4 << "," << std::endl;
+    json << "            \"byteOffset\": " << 0 << std::endl;
+    json << "        }" << std::endl;
+    json << "    ]," << std::endl;
+    json << "    \"images\": [" << std::endl;
+    json << "        {" << std::endl;
+    json << "            \"bufferView\": " << 2 << "," << std::endl;
+    json << "            \"mimeType\": \"image/jpeg\"" << std::endl;
+    json << "        }" << std::endl;
+    json << "    ]," << std::endl;
 
     std::string chunkData0;
 
