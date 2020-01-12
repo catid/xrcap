@@ -138,6 +138,9 @@ endif()
 if (NOT TARGET rapidjson)
     add_subdirectory(thirdparty/rapidjson rapidjson)
 endif()
+if (NOT TARGET draco)
+    add_subdirectory(thirdparty/draco draco)
+endif()
 
 
 ################################################################################

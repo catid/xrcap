@@ -2,6 +2,8 @@
 
 #include "Gltf2Writer.hpp"
 
+#include <draco/compression/encode.h>
+
 #include <core.hpp>
 #include <core_logging.hpp>
 
@@ -575,7 +577,7 @@ bool GltfBuffers::Serialize(const XrcapFrame& frame)
 }
 
 static const int kJpegQuality = 90;
-static const int kJpegFlags = TJFLAG_ACCURATEDCT /*| TJFLAG_PROGRESSIVE*/;
+static const int kJpegFlags = TJFLAG_ACCURATEDCT | TJFLAG_PROGRESSIVE;
 
 bool GltfBuffers::SerializeImage(const XrcapPerspective& perspective, unsigned& image_buffer_index)
 {

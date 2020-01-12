@@ -34,6 +34,7 @@ target_link_libraries(viewer PRIVATE
     nfd # nativefiledialog: Portable file open dialog
     rapidjson # glTF encoder
     jpegturbo # glTF encoder
+    draco # glTF encoder
 )
 
 install(TARGETS viewer DESTINATION bin)
