@@ -11,8 +11,8 @@ set(VIEWER_SOURCE_FILES
     src/viewer_main.cpp
     src/ViewerSettings.hpp
     src/ViewerSettings.cpp
-    src/GltfWriter.hpp
-    src/GltfWriter.cpp
+    src/Gltf2Writer.hpp
+    src/Gltf2Writer.cpp
 )
 
 
@@ -24,15 +24,16 @@ set(VIEWER_SOURCE_FILES
 add_executable(viewer ${VIEWER_SOURCE_FILES})
 target_link_libraries(viewer PRIVATE
     core
+    capture_client_igpu
+    depth_mesh
     glfw
     glad
-    capture_client_igpu
     nuklear
     vectormath
     yaml
-    depth_mesh
     nfd # nativefiledialog: Portable file open dialog
-    rapidjson
+    rapidjson # glTF encoder
+    jpegturbo # glTF encoder
 )
 
 install(TARGETS viewer DESTINATION bin)
