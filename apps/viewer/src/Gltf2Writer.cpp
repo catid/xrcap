@@ -6,6 +6,7 @@
 
 #include <core.hpp>
 #include <core_logging.hpp>
+#include <core_string.hpp>
 
 #include <sstream>
 #include <fstream>
@@ -14,7 +15,6 @@
 #include <turbojpeg.h>
 
 #define RAPIDJSON_HAS_STDSTRING 1
-//#define ENABLE_PRETTY_JSON_WRITER
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 using JsonAllocatorT = rapidjson::MemoryPoolAllocator<>;
@@ -364,16 +364,35 @@ struct GltfMeshPrimitive {
     unsigned attributes_TEXCOORD_0 = 1;
     unsigned indices = 2;
 
+    bool enableDraco = false;
+    unsigned draco_bufferView = 0;
+    unsigned draco_POSITION = 0;
+    unsigned draco_TEXCOORD_0 = 0;
+
     template<class W> void Serialize(W& writer) const {
         writer.StartObject();
         writer.String("material"); writer.Uint(material);
         writer.String("mode"); writer.Uint(mode);
         writer.String("indices"); writer.Uint(indices);
-        writer.String("attributes");
-        writer.StartObject();
+        writer.String("attributes"); writer.StartObject();
         writer.String("POSITION"); writer.Uint(attributes_POSITION);
         writer.String("TEXCOORD_0"); writer.Uint(attributes_TEXCOORD_0);
         writer.EndObject();
+        if (enableDraco) {
+            writer.String("extensions"); writer.StartObject();
+
+            writer.String("KHR_draco_mesh_compression"); writer.StartObject();
+            writer.String("bufferView"); writer.Uint(draco_bufferView);
+
+            writer.String("attributes"); writer.StartObject();
+            writer.String("POSITION"); writer.Uint(draco_POSITION);
+            writer.String("TEXCOORD_0"); writer.Uint(draco_TEXCOORD_0);
+            writer.EndObject();
+
+            writer.EndObject();
+
+            writer.EndObject();
+        }
         writer.EndObject();
     }
 };
@@ -501,36 +520,7 @@ struct GltfCamera
     }
 };
 
-/*
-    {
-        "asset": {
-        }
-        "buffers": [
-        ],
-        "bufferViews": [
-        ],
-        "images": [
-        ],
-        "samplers": [
-        ],
-        "textures" : [
-        ],
-        "accessors": [
-        ],
-        "materials": [
-        ],
-        "meshes": [
-        ],
-        "nodes": [
-        ],
-        "cameras": [
-        ],
-        "scenes": [
-        ],
-        "scene": 0
-    }
-*/
-
+// JSON file root serializer
 struct GltfJsonFile
 {
     GltfAsset asset;
@@ -545,6 +535,8 @@ struct GltfJsonFile
     std::vector<GltfNode> nodes;
     std::vector<GltfCamera> cameras;
     std::vector<GltfScene> scenes;
+    std::vector<std::string> extensionsUsed;
+    std::vector<std::string> extensionsRequired;
     unsigned scene = 0;
 
     template<class W> void Serialize(W& writer) const {
@@ -608,6 +600,20 @@ struct GltfJsonFile
         }
         writer.EndArray();
         writer.String("scene"); writer.Uint(scene);
+        if (!extensionsUsed.empty()) {
+            writer.String("extensionsUsed"); writer.StartArray();
+            for (const auto& extension : extensionsUsed) {
+                writer.String(extension);
+            }
+            writer.EndArray();
+        }
+        if (!extensionsRequired.empty()) {
+            writer.String("extensionsRequired"); writer.StartArray();
+            for (const auto& extension : extensionsRequired) {
+                writer.String(extension);
+            }
+            writer.EndArray();
+        }
         writer.EndObject();
         CORE_DEBUG_ASSERT(writer.IsComplete());
     }
@@ -631,7 +637,7 @@ struct GltfBuffers
     // Buffer 0 will be the JSON metadata
     // Remaining buffers are all binary
     // On failure: Returns false.
-    bool Serialize(const XrcapFrame& frame);
+    bool Serialize(const XrcapFrame& frame, bool enable_draco);
 
     std::vector<GltfBufferData> Buffers;
 
@@ -641,7 +647,10 @@ private:
         const XrcapPerspective& perspective,
         unsigned& image_offset,
         unsigned& image_bytes);
-    bool SerializePerspective(GltfJsonFile& json, const XrcapPerspective& perspective);
+    bool SerializePerspective(
+        GltfJsonFile& json,
+        const XrcapPerspective& perspective,
+        bool enable_draco);
 
     char AllocatorBuffer[1024];
     std::unique_ptr<JsonAllocatorT> Allocator;
@@ -654,6 +663,8 @@ private:
 
     // Incremented as BIN chunk is filled in
     unsigned BufferOffset = 0;
+
+    std::vector<std::shared_ptr<draco::EncoderBuffer>> DracoBuffers;
 };
 
 GltfBuffers::~GltfBuffers()
@@ -679,9 +690,11 @@ void GltfBuffers::Cleanup()
     JsonBuffer.reset();
     Allocator.reset();
     BufferOffset = 0;
+
+    DracoBuffers.clear();
 }
 
-bool GltfBuffers::Serialize(const XrcapFrame& frame)
+bool GltfBuffers::Serialize(const XrcapFrame& frame, bool enable_draco)
 {
     if (!frame.Valid) {
         spdlog::error("Unable to serialize invalid XrcapFrame to glTF");
@@ -698,7 +711,7 @@ bool GltfBuffers::Serialize(const XrcapFrame& frame)
 
     Allocator = std::make_unique<JsonAllocatorT>(AllocatorBuffer, sizeof(AllocatorBuffer));
     JsonBuffer = std::make_unique<JsonBufferT>(Allocator.get());
-#ifdef ENABLE_PRETTY_JSON_WRITER
+#ifdef GLTF2_PRETTY_JSON_WRITER
     rapidjson::PrettyWriter<JsonBufferT> writer(*JsonBuffer);
 #else
     rapidjson::Writer<JsonBufferT> writer(*JsonBuffer);
@@ -711,6 +724,11 @@ bool GltfBuffers::Serialize(const XrcapFrame& frame)
     });
 
     GltfJsonFile json;
+
+    if (enable_draco) {
+        json.extensionsUsed.push_back("KHR_draco_mesh_compression");
+        json.extensionsRequired.push_back("KHR_draco_mesh_compression");
+    }
 
     // Prepare a primary scene to be filled in with nodes from each perspective
     std::ostringstream scene_name;
@@ -731,7 +749,7 @@ bool GltfBuffers::Serialize(const XrcapFrame& frame)
         if (!perspective.Valid) {
             continue;
         }
-        if (!SerializePerspective(json, perspective)) {
+        if (!SerializePerspective(json, perspective, enable_draco)) {
             spdlog::error("Perspective failed to serialize: guid={} camera={}", perspective.Guid, perspective.CameraIndex);
             continue;
         }
@@ -851,7 +869,10 @@ static const double kIdentityMatrix[16] = {
     0.0, 0.0, 0.0, 1.0,
 };
 
-bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspective& perspective)
+bool GltfBuffers::SerializePerspective(
+    GltfJsonFile& json,
+    const XrcapPerspective& perspective,
+    bool enable_draco)
 {
     // Convert to JPEG and store in file buffer list
     unsigned image_offset = 0, image_bytes = 0;
@@ -903,36 +924,113 @@ bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspectiv
     baseColorTexture.texCoord = 0; // TEXCOORD_0
     json.materials.push_back(material);
 
-    // XYZ, UV buffers:
+    // Draco:
 
-    const unsigned xyzuv_buffer_offset = BufferOffset;
-    GltfBufferData xyzuv_buffer_data;
-    xyzuv_buffer_data.Data = reinterpret_cast<uint8_t*>( perspective.XyzuvVertices );
-    xyzuv_buffer_data.Size = static_cast<unsigned long>( perspective.FloatsCount * sizeof(float) );
-    Buffers.push_back(xyzuv_buffer_data);
-    BufferOffset += ChunkLengthRoundUp4(xyzuv_buffer_data.Size);
+    int draco_position_index = 0;
+    int draco_texcoord_index = 0;
+    unsigned draco_buffer_view_index = 0;
+    unsigned xyz_buffer_view_index = 0;
+    unsigned uv_buffer_view_index = 0;
+    if (enable_draco)
+    {
+        std::shared_ptr<draco::Mesh> dracoMesh(std::make_shared<draco::Mesh>());
 
-    const unsigned xyz_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
-    GltfBufferView xyzBufferView;
-    xyzBufferView.buffer = 0; // All buffers concatenated
-    xyzBufferView.byteLength = xyzuv_buffer_data.Size;
-    xyzBufferView.byteOffset = xyzuv_buffer_offset;
-    xyzBufferView.byteStrideDefined = true;
-    xyzBufferView.byteStride = 20; // x, y, z, u, v
-    json.bufferViews.push_back(xyzBufferView);
+        const unsigned numVertices = perspective.FloatsCount / 5;
+        dracoMesh->set_num_points(numVertices);
 
-    const unsigned uv_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
-    GltfBufferView uvBufferView;
-    uvBufferView.buffer = 0; // All buffers concatenated
-    uvBufferView.byteLength = xyzuv_buffer_data.Size;
-    uvBufferView.byteOffset = xyzuv_buffer_offset + 12;
-    uvBufferView.byteStrideDefined = true;
-    uvBufferView.byteStride = 20; // x, y, z, u, v
-    json.bufferViews.push_back(uvBufferView);
+        const unsigned triangleCount = perspective.IndicesCount / 3;
+        dracoMesh->SetNumFaces(triangleCount);
+        for (unsigned i = 0; i < triangleCount; ++i) {
+            draco::Mesh::Face face;
+            face[0] = perspective.Indices[i * 3];
+            face[1] = perspective.Indices[i * 3 + 1];
+            face[2] = perspective.Indices[i * 3 + 2];
+            dracoMesh->SetFace(draco::FaceIndex(i), face);
+        }
+
+        draco::DataBuffer xyzuv_buffer;
+        xyzuv_buffer.Resize(perspective.FloatsCount * sizeof(float));
+        xyzuv_buffer.Write(0, perspective.XyzuvVertices, perspective.FloatsCount * sizeof(float));
+
+        draco::GeometryAttribute geoatt_position;
+        geoatt_position.Init(draco::GeometryAttribute::Type::POSITION, &xyzuv_buffer, 3, draco::DataType::DT_FLOAT32, false, 20, 0);
+        draco_position_index = dracoMesh->AddAttribute(geoatt_position, true, numVertices);
+
+        draco::GeometryAttribute geoatt_texcoord;
+        geoatt_texcoord.Init(draco::GeometryAttribute::Type::TEX_COORD, &xyzuv_buffer, 2, draco::DataType::DT_FLOAT32, false, 20, 12);
+        draco_texcoord_index = dracoMesh->AddAttribute(geoatt_texcoord, true, numVertices);
+
+        // FIXME: Compression fails when I use these
+        // Required: DRACO_ATTRIBUTE_DEDUPLICATION_SUPPORTED
+        //dracoMesh->DeduplicateAttributeValues();
+        //dracoMesh->DeduplicatePointIds();
+
+        draco::Encoder encoder;
+        encoder.SetSpeedOptions(kDracoEncodeSpeed, kDracoDecodeSpeed);
+        //encoder.SetAttributeQuantization(draco::GeometryAttribute::POSITION, 8);
+        //encoder.SetAttributeQuantization(draco::GeometryAttribute::TEX_COORD, 6);
+
+        std::shared_ptr<draco::EncoderBuffer> encoder_buffer;
+        encoder_buffer = std::make_shared<draco::EncoderBuffer>();
+
+        draco::EncoderBuffer dracoBuffer;
+        draco::Status status = encoder.EncodeMeshToBuffer(*dracoMesh, encoder_buffer.get());
+        if (status.code() != draco::Status::OK) {
+            spdlog::error("Draco EncodeMeshToBuffer failed: {}", status.error_msg_string());
+            return false;
+        }
+
+        //spdlog::info("Draco compressed = {}", dracoBuffer.size());
+        DracoBuffers.push_back(encoder_buffer);
+
+        const unsigned draco_buffer_offset = BufferOffset;
+        GltfBufferData draco_buffer_data;
+        draco_buffer_data.Data = (uint8_t*)encoder_buffer->data();
+        draco_buffer_data.Size = static_cast<unsigned long>( encoder_buffer->size() );
+        Buffers.push_back(draco_buffer_data);
+        BufferOffset += ChunkLengthRoundUp4(draco_buffer_data.Size);
+
+        draco_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
+        GltfBufferView dracoBufferView;
+        dracoBufferView.buffer = 0; // All buffers concatenated
+        dracoBufferView.byteLength = static_cast<unsigned>( draco_buffer_data.Size );
+        dracoBufferView.byteOffset = draco_buffer_offset;
+        dracoBufferView.byteStrideDefined = false;
+        json.bufferViews.push_back(dracoBufferView);
+    }
+    else // Uncompressed (Draco disabled):
+    {
+        // XYZ, UV buffers:
+
+        const unsigned xyzuv_buffer_offset = BufferOffset;
+        GltfBufferData xyzuv_buffer_data;
+        xyzuv_buffer_data.Data = reinterpret_cast<uint8_t*>( perspective.XyzuvVertices );
+        xyzuv_buffer_data.Size = static_cast<unsigned long>( perspective.FloatsCount * sizeof(float) );
+        Buffers.push_back(xyzuv_buffer_data);
+        BufferOffset += ChunkLengthRoundUp4(xyzuv_buffer_data.Size);
+
+        xyz_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
+        GltfBufferView xyzBufferView;
+        xyzBufferView.buffer = 0; // All buffers concatenated
+        xyzBufferView.byteLength = xyzuv_buffer_data.Size;
+        xyzBufferView.byteOffset = xyzuv_buffer_offset;
+        xyzBufferView.byteStrideDefined = true;
+        xyzBufferView.byteStride = 20; // x, y, z, u, v
+        json.bufferViews.push_back(xyzBufferView);
+
+        uv_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
+        GltfBufferView uvBufferView;
+        uvBufferView.buffer = 0; // All buffers concatenated
+        uvBufferView.byteLength = xyzuv_buffer_data.Size;
+        uvBufferView.byteOffset = xyzuv_buffer_offset + 12;
+        uvBufferView.byteStrideDefined = true;
+        uvBufferView.byteStride = 20; // x, y, z, u, v
+        json.bufferViews.push_back(uvBufferView);
+    }
 
     const unsigned xyz_accessor_index = static_cast<unsigned>( json.accessors.size() );
     GltfAccessor xyzAccessor;
-    xyzAccessor.bufferView = xyz_buffer_view_index;
+    xyzAccessor.bufferView = xyz_buffer_view_index; // Ignored for Draco
     xyzAccessor.byteOffset = 0;
     xyzAccessor.componentType = 5126; // GL_FLOAT
     xyzAccessor.count = perspective.FloatsCount / 5;
@@ -968,7 +1066,7 @@ bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspectiv
 
     const unsigned uv_accessor_index = static_cast<unsigned>( json.accessors.size() );
     GltfAccessor uvAccessor;
-    uvAccessor.bufferView = uv_buffer_view_index;
+    uvAccessor.bufferView = uv_buffer_view_index; // Ignored for Draco
     uvAccessor.byteOffset = 0;
     uvAccessor.componentType = 5126; // GL_FLOAT
     uvAccessor.count = perspective.FloatsCount / 5;
@@ -1003,24 +1101,28 @@ bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspectiv
 
     // Indices buffers:
 
-    const unsigned indices_buffer_offset = BufferOffset;
-    GltfBufferData indices_buffer_data;
-    indices_buffer_data.Data = reinterpret_cast<uint8_t*>( perspective.Indices );
-    indices_buffer_data.Size = static_cast<unsigned long>( perspective.IndicesCount * sizeof(uint32_t) );
-    Buffers.push_back(indices_buffer_data);
-    BufferOffset += ChunkLengthRoundUp4(indices_buffer_data.Size);
+    unsigned indices_buffer_view_index = 0;
+    if (!enable_draco)
+    {
+        const unsigned indices_buffer_offset = BufferOffset;
+        GltfBufferData indices_buffer_data;
+        indices_buffer_data.Data = reinterpret_cast<uint8_t*>( perspective.Indices );
+        indices_buffer_data.Size = static_cast<unsigned long>( perspective.IndicesCount * sizeof(uint32_t) );
+        Buffers.push_back(indices_buffer_data);
+        BufferOffset += ChunkLengthRoundUp4(indices_buffer_data.Size);
 
-    const unsigned indices_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
-    GltfBufferView indicesBufferView;
-    indicesBufferView.buffer = 0; // All buffers concatenated
-    indicesBufferView.byteLength = indices_buffer_data.Size;
-    indicesBufferView.byteOffset = indices_buffer_offset;
-    indicesBufferView.byteStrideDefined = false;
-    json.bufferViews.push_back(indicesBufferView);
+        indices_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
+        GltfBufferView indicesBufferView;
+        indicesBufferView.buffer = 0; // All buffers concatenated
+        indicesBufferView.byteLength = indices_buffer_data.Size;
+        indicesBufferView.byteOffset = indices_buffer_offset;
+        indicesBufferView.byteStrideDefined = false;
+        json.bufferViews.push_back(indicesBufferView);
+    }
 
     const unsigned indices_accessor_index = static_cast<unsigned>( json.accessors.size() );
     GltfAccessor indicesAccessor;
-    indicesAccessor.bufferView = indices_buffer_view_index;
+    indicesAccessor.bufferView = indices_buffer_view_index; // Ignored for Draco
     indicesAccessor.byteOffset = 0;
     indicesAccessor.componentType = 0x1405; // uint32
     indicesAccessor.count = perspective.IndicesCount;
@@ -1056,13 +1158,20 @@ bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspectiv
     primitive.indices = indices_accessor_index;
     primitive.attributes_TEXCOORD_0 = uv_accessor_index;
     primitive.attributes_POSITION = xyz_accessor_index;
+    primitive.enableDraco = enable_draco;
+    if (enable_draco) {
+        primitive.draco_bufferView = draco_buffer_view_index;
+        primitive.draco_POSITION = static_cast<unsigned>( draco_position_index );
+        primitive.draco_TEXCOORD_0 = static_cast<unsigned>( draco_texcoord_index );
+    }
     GltfMesh mesh;
     mesh.name = node_name_str;
     mesh.primitives.push_back(primitive);
     json.meshes.push_back(mesh);
 
-    Matrix4 transform;
+    // Node:
 
+    Matrix4 transform;
     if (perspective.Extrinsics->IsIdentity) {
         transform = Matrix4::identity();
     } else {
@@ -1073,6 +1182,7 @@ bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspectiv
         }
     }
 
+    // Rotate mesh so that it is oriented right-side-up
     transform = Matrix4::rotationZ(M_PI_FLOAT) * transform;
 
     const unsigned node_index = static_cast<unsigned>( json.nodes.size() );
@@ -1101,10 +1211,8 @@ bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspectiv
 bool WriteFrameToGlbFile(
     const XrcapFrame& frame,
     const char* file_path,
-    bool use_draco)
+    bool enable_draco)
 {
-    CORE_UNUSED(use_draco);
-
     std::ofstream file(file_path, std::ios::binary);
     if (!file) {
         spdlog::error("Unable to open file: {}", file_path);
@@ -1112,7 +1220,7 @@ bool WriteFrameToGlbFile(
     }
 
     GltfBuffers buffers;
-    if (!buffers.Serialize(frame)) {
+    if (!buffers.Serialize(frame, enable_draco)) {
         return false;
     }
 

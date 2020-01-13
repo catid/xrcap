@@ -6,12 +6,16 @@
     Format specification:
     https://github.com/KhronosGroup/glTF/tree/master/specification/2.0
 
-    Other references:
+    Format validators:
     https://github.khronos.org/glTF-Validator/
     https://developers.facebook.com/tools/3d/validation
+    Maximum GLB size for Facebook = 3145728 bytes
+
+    Code references:
     https://github.com/facebookincubator/FBX2glTF/
 
-    Maximum GLB size for Facebook = 3145728 bytes
+    Draco mesh compression extension spec:
+    https://github.com/KhronosGroup/glTF/blob/master/extensions/2.0/Khronos/KHR_draco_mesh_compression/README.md
 
     Known issues:
     + Images are not padded out to power-of-two sizes
@@ -22,6 +26,17 @@
 #include <capture_client.h>
 
 namespace core {
+
+
+//------------------------------------------------------------------------------
+// Constants
+
+// 0 = slowest speed, best compression
+// 10 = fastest, but worst compression
+static const int kDracoEncodeSpeed = 0;
+static const int kDracoDecodeSpeed = 0;
+
+//#define GLTF2_PRETTY_JSON_WRITER
 
 
 //------------------------------------------------------------------------------
@@ -63,7 +78,7 @@ static const unsigned kGlbChunkHeaderBytes = 8;
 bool WriteFrameToGlbFile(
     const XrcapFrame& frame,
     const char* file_path,
-    bool use_draco);
+    bool enable_draco); // Google Draco mesh compressor optional extension
 
 
 } // namespace core
