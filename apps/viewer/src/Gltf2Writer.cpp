@@ -14,11 +14,17 @@
 #include <turbojpeg.h>
 
 #define RAPIDJSON_HAS_STDSTRING 1
-#define ENABLE_PRETTY_JSON_WRITER
+//#define ENABLE_PRETTY_JSON_WRITER
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 using JsonAllocatorT = rapidjson::MemoryPoolAllocator<>;
 using JsonBufferT = rapidjson::GenericStringBuffer<rapidjson::UTF8<>, JsonAllocatorT>;
+
+#include <vectormath.hpp>
+
+#ifndef M_PI_FLOAT
+# define M_PI_FLOAT 3.14159265f
+#endif
 
 namespace core {
 
@@ -1055,20 +1061,28 @@ bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspectiv
     mesh.primitives.push_back(primitive);
     json.meshes.push_back(mesh);
 
+    Matrix4 transform;
+
+    if (perspective.Extrinsics->IsIdentity) {
+        transform = Matrix4::identity();
+    } else {
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                transform.setElem(j, i, perspective.Extrinsics->Transform[i * 4 + j]);
+            }
+        }
+    }
+
+    transform = Matrix4::rotationZ(M_PI_FLOAT) * transform;
+
     const unsigned node_index = static_cast<unsigned>( json.nodes.size() );
     GltfNode node;
     node.name = node_name_str;
     node.mesh = mesh_index;
-    if (perspective.Extrinsics->IsIdentity) {
-        for (int i = 0; i < 16; ++i) {
-            node.matrix[i] = kIdentityMatrix[i];
-        }
-    } else {
-        // Convert row-major to column-major order:
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 0; j < 4; ++j) {
-                node.matrix[j * 4 + i] = static_cast<double>( perspective.Extrinsics->Transform[i * 4 + j] );
-            }
+    // Convert row-major to column-major order:
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            node.matrix[j * 4 + i] = static_cast<double>( transform.getElem(j, i) );
         }
     }
     json.nodes.push_back(node);
