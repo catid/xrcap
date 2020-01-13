@@ -9,10 +9,10 @@ else()
     set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ".a")
 endif()
 
-find_library(TURBOJPEG_LIB
+find_library(TURBOJPEG_STATIC_LIB
     NAMES
-        # turbojpeg.lib for dynamic linkage
-        turbojpeg
+        # turbojpeg-static.lib for static linkage
+        turbojpeg-static
     HINTS
         ${CMAKE_SOURCE_DIR}/thirdparty/bin/jpegturbo/lib/
     NO_CMAKE_SYSTEM_PATH
@@ -24,7 +24,7 @@ find_path(TURBOJPEG_INCLUDE_DIRS turbojpeg.h
     REQUIRED
 )
 
-message("TURBOJPEG_LIB: ${TURBOJPEG_LIB}")
+message("TURBOJPEG_STATIC_LIB: ${TURBOJPEG_STATIC_LIB}")
 message("TURBOJPEG_INCLUDE_DIRS: ${TURBOJPEG_INCLUDE_DIRS}")
 
 find_library(TURBOJPEG_DYNLIB MODULE
@@ -50,4 +50,4 @@ endif()
 
 add_library(jpegturbo INTERFACE)
 target_include_directories(jpegturbo INTERFACE ${TURBOJPEG_INCLUDE_DIRS})
-target_link_libraries(jpegturbo INTERFACE ${TURBOJPEG_LIB})
+target_link_libraries(jpegturbo INTERFACE ${TURBOJPEG_STATIC_LIB})

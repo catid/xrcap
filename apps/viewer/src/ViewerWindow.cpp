@@ -15,6 +15,8 @@
 #include <fstream>
 #include <ios>
 
+#include "Gltf2Writer.hpp"
+
 namespace core {
 
 
@@ -888,13 +890,22 @@ void ViewerWindow::SetupUI()
             title = "Playback (no file)";
         }
 
-        if (nk_begin_titled(ctx, "Playback", title.c_str(), nk_rect(width * 0.5f, static_cast<float>( height - 190 ), 440, 90),
+        if (nk_begin_titled(ctx, "Playback", title.c_str(), nk_rect(width * 0.5f - 220, static_cast<float>( height - 200 ), 440, 130),
             NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_SCALABLE|
             NK_WINDOW_MINIMIZABLE|NK_WINDOW_TITLE))
         {
             nk_layout_row_dynamic(ctx, 30, IsFileOpen ? 4 : 2);
             if (nk_button_label(ctx, "Open")) {
                 OpenFile();
+
+                // Configure some defaults when going into playback mode
+                nk_window_collapse(ctx, "Live", NK_MINIMIZED);
+                nk_window_collapse(ctx, "Calibration", NK_MINIMIZED);
+                nk_window_collapse(ctx, "Configuration", NK_MINIMIZED);
+                nk_window_collapse(ctx, "State", NK_MINIMIZED);
+                nk_window_collapse(ctx, "Compression", NK_MINIMIZED);
+                nk_window_collapse(ctx, "Login", NK_MINIMIZED);
+                ShowMeshCheckValue = 1;
             }
             if (IsFileOpen) {
                 if (nk_button_label(ctx, "Close")) {
@@ -911,6 +922,12 @@ void ViewerWindow::SetupUI()
             } else {
                 nk_label(ctx, "No File Loaded", NK_TEXT_LEFT);
             }
+
+            nk_layout_row_dynamic(ctx, 30, 2);
+            if (nk_button_label(ctx, "Export glTF2")) {
+                SaveGltf();
+            }
+            nk_checkbox_label(ctx, "Use Draco", &DracoCompressionEnabled);
         }
         nk_end(ctx);
     }
@@ -982,6 +999,27 @@ void ViewerWindow::PauseRecording()
 {
     spdlog::info("Pause recording");
     xrcap_record_pause(1);
+}
+
+void ViewerWindow::SaveGltf()
+{
+    spdlog::info("Saving glTF");
+
+    nfdchar_t* path = nullptr;
+    nfdresult_t result = NFD_SaveDialog("glb", "still_frame.glb", &path);
+    ScopedFunction path_scope([&]() {
+        NFD_FreeOutPath(&path);
+    });
+    if (result == NFD_OKAY && path) {
+        spdlog::info("SaveGltf: User selected path: `{}`", path);
+        if (WriteFrameToGlbFile(LastFrame, path, DracoCompressionEnabled != 0)) {
+            spdlog::info("SaveGltf: Success");
+        } else {
+            spdlog::error("SaveGltf: File export failed");
+        }
+    } else {
+        spdlog::warn("SaveGltf: User cancelled file selection");
+    }
 }
 
 void ViewerWindow::ResetLighting()

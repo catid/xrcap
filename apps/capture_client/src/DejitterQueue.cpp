@@ -211,7 +211,7 @@ std::shared_ptr<DecodedBatch> DejitterQueue::DequeueNext(int* sleep_msec)
         return nullptr;
     }
     if (LastReleasedLocalUsec != 0 && (uint64_t)(now_usec - LastReleasedLocalUsec) > dejitter_queue_usec * 2) {
-        spdlog::warn("DejitterQueue: Reset on long release time");
+        //spdlog::warn("DejitterQueue: Reset on long release time");
         Reset();
     }
     int queued_time_usec = (int)static_cast<int64_t>( now_usec - earliest->QueueStartUsec );

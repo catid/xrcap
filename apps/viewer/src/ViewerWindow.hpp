@@ -109,9 +109,11 @@ protected:
 
     bool IsLivePlayback = false;
     bool IsFileOpen = false;
-    int FileLoopEnabled = 0;
+    int FileLoopEnabled = 1;
 
     uint64_t PhotoboothStartMsec = 0;
+
+    int DracoCompressionEnabled = 0;
 
 
     void ResetLighting();
@@ -142,6 +144,8 @@ protected:
     void CloseRecordingFile();
     void StartRecording();
     void PauseRecording();
+
+    void SaveGltf();
 };
 
 

@@ -508,7 +508,10 @@ struct GltfBuffers
 
 private:
     void Cleanup();
-    bool SerializeImage(const XrcapPerspective& perspective, unsigned& image_buffer_index);
+    bool SerializeImage(
+        const XrcapPerspective& perspective,
+        unsigned& image_buffer_index,
+        unsigned& image_bytes);
     bool SerializePerspective(GltfJsonFile& json, const XrcapPerspective& perspective);
 
     char AllocatorBuffer[1024];
@@ -540,11 +543,14 @@ void GltfBuffers::Cleanup()
         tjDestroy(JpegHandle);
         JpegHandle = nullptr;
     }
+
+    JsonBuffer.reset();
+    Allocator.reset();
 }
 
 bool GltfBuffers::Serialize(const XrcapFrame& frame)
 {
-    if (frame.Valid) {
+    if (!frame.Valid) {
         spdlog::error("Unable to serialize invalid XrcapFrame to glTF");
         return false;
     }
@@ -561,10 +567,28 @@ bool GltfBuffers::Serialize(const XrcapFrame& frame)
     JsonBuffer = std::make_unique<JsonBufferT>(Allocator.get());
     rapidjson::Writer<JsonBufferT> writer(*JsonBuffer);
 
-    GltfJsonFile json;
+    // Place an empty buffer on the front, which will contain the JSON data
+    Buffers.push_back({
+        nullptr,
+        0
+    });
 
+    GltfJsonFile json;
+    unsigned perspective_count = 0;
     for (unsigned perspective_index = 0; perspective_index < XRCAP_PERSPECTIVE_COUNT; ++perspective_index) {
-        SerializePerspective(json, frame.Perspectives[perspective_index]);
+        const auto& perspective = frame.Perspectives[perspective_index];
+        if (!perspective.Valid) {
+            continue;
+        }
+        if (!SerializePerspective(json, perspective)) {
+            spdlog::error("Perspective failed to serialize: guid={} camera={}", perspective.Guid, perspective.CameraIndex);
+            continue;
+        }
+        ++perspective_count;
+    }
+    if (perspective_count <= 0) {
+        spdlog::error("No valid perspectives to serialize");
+        return false;
     }
 
     GltfCamera camera;
@@ -573,14 +597,32 @@ bool GltfBuffers::Serialize(const XrcapFrame& frame)
 
     json.Serialize(writer);
 
+    CORE_DEBUG_ASSERT(!Buffers.empty());
+    Buffers[0].Data = (uint8_t*)JsonBuffer->GetString();
+    Buffers[0].Size = static_cast<unsigned long>( JsonBuffer->GetSize() );
+
+    spdlog::info("Successfully serialized {} perspectives", perspective_count);
+
     return true;
 }
 
 static const int kJpegQuality = 90;
 static const int kJpegFlags = TJFLAG_ACCURATEDCT | TJFLAG_PROGRESSIVE;
 
-bool GltfBuffers::SerializeImage(const XrcapPerspective& perspective, unsigned& image_buffer_index)
+bool GltfBuffers::SerializeImage(
+    const XrcapPerspective& perspective,
+    unsigned& image_buffer_index,
+    unsigned& image_bytes)
 {
+    if (perspective.Width < 16 || perspective.Height < 16) {
+        spdlog::error("Image dimensions invalid: w={} h={}", perspective.Width, perspective.Height);
+        return false;
+    }
+    if (perspective.ChromaWidth < 16 || perspective.ChromaHeight < 16) {
+        spdlog::error("Chroma dimensions invalid: w={} h={}", perspective.ChromaWidth, perspective.ChromaHeight);
+        return false;
+    }
+
     TempU.resize(perspective.ChromaWidth * perspective.ChromaHeight);
     TempV.resize(perspective.ChromaWidth * perspective.ChromaHeight);
     uint8_t* u = TempU.data();
@@ -632,6 +674,8 @@ bool GltfBuffers::SerializeImage(const XrcapPerspective& perspective, unsigned& 
     });
 
     image_buffer_index = static_cast<unsigned>( Buffers.size() );
+    image_bytes = static_cast<unsigned>( jpeg_size );
+
     Buffers.push_back({
         jpeg_buf,
         jpeg_size
@@ -649,50 +693,31 @@ static const double kIdentityMatrix[16] = {
 
 bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspective& perspective)
 {
-    unsigned file_image_buffer_number = 0;
-    if (!SerializeImage(perspective, file_image_buffer_number)) {
+    // Convert to JPEG and store in file buffer list
+    unsigned file_image_buffer_number = 0, image_bytes = 0;
+    if (!SerializeImage(perspective, file_image_buffer_number, image_bytes)) {
         return false;
     }
 
+    // Generate names
     std::ostringstream node_name;
     node_name << "Node::" << perspective.Guid << "::" << perspective.CameraIndex;
     const std::string node_name_str = node_name.str();
-
-    std::ostringstream model_buffer_uri;
-    model_buffer_uri << node_name_str << ".model";
-
+    std::ostringstream xyzuv_buffer_uri;
+    xyzuv_buffer_uri << node_name_str << ".xyzuv";
+    std::ostringstream indices_buffer_uri;
+    indices_buffer_uri << node_name_str << ".indices";
     std::ostringstream image_buffer_uri;
     image_buffer_uri << node_name_str << ".jpg";
 
-    const unsigned mesh_index = static_cast<unsigned>( json.meshes.size() );
-
-    GltfNode node;
-    node.name = node_name_str;
-    node.mesh = mesh_index;
-    if (perspective.Extrinsics->IsIdentity) {
-        for (int i = 0; i < 16; ++i) {
-            node.matrix[i] = kIdentityMatrix[i];
-        }
-    } else {
-        for (int i = 0; i < 16; ++i) {
-            node.matrix[i] = static_cast<double>( perspective.Extrinsics->Transform[i] );
-        }
-    }
-    json.nodes.push_back(node);
-
-    const unsigned model_buffer_index = static_cast<unsigned>( json.buffers.size() );
-    GltfBuffer modelBuffer;
-    json.buffers.push_back(modelBuffer);
-
-    const unsigned xyzuv_buffer_view = static_cast<unsigned>( json.bufferViews.size() );
-    GltfBufferView xyzuvBufferView;
-    json.bufferViews.push_back(xyzuvBufferView);
+    // Image:
 
     const unsigned image_buffer_index = static_cast<unsigned>( json.buffers.size() );
     GltfBuffer imageBuffer;
-    imageBuffer.byteLength = 0;
-    imageBuffer.uri = node_name_str;
+    imageBuffer.byteLength = image_bytes;
+    imageBuffer.uri = image_buffer_uri.str();
     json.buffers.push_back(imageBuffer);
+    CORE_DEBUG_ASSERT(file_image_buffer_number + 1 == image_buffer_index);
 
     const unsigned image_buffer_view = static_cast<unsigned>( json.bufferViews.size() );
     GltfBufferView imageBufferView;
@@ -716,42 +741,124 @@ bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspectiv
     sampler.wrapT = 33071;
     json.samplers.push_back(sampler);
 
+    const unsigned texture_index = static_cast<unsigned>( json.textures.size() );
     GltfTexture texture;
     texture.sampler = sampler_index;
     texture.source = image_index;
     json.textures.push_back(texture);
 
-    const unsigned indices_accessor_index = static_cast<unsigned>( json.accessors.size() );
-    GltfAccessor indicesAccessor;
-    indicesAccessor.bufferView = image_buffer_view;
-    json.accessors.push_back(indicesAccessor);
-
-    const unsigned position_accessor_index = static_cast<unsigned>( json.accessors.size() );
-    GltfAccessor positionAccessor;
-    positionAccessor.bufferView = image_buffer_view;
-    json.accessors.push_back(positionAccessor);
-
-    const unsigned texcoord_accessor_index = static_cast<unsigned>( json.accessors.size() );
-    GltfAccessor texcoordAccessor;
-    texcoordAccessor.bufferView = image_buffer_view;
-    json.accessors.push_back(texcoordAccessor);
-
     const unsigned material_index = static_cast<unsigned>( json.materials.size() );
     GltfMaterial material;
     material.name = node_name_str;
     material.doubleSided = false;
-    //material.pbrMetallicRoughness; // TBD
+    auto &baseColorTexture = material.pbrMetallicRoughness.baseColorTexture;
+    baseColorTexture.index = texture_index;
+    baseColorTexture.texCoord = 0; // TEXCOORD_0
     json.materials.push_back(material);
 
+    // XYZ, UV buffers:
+
+    const unsigned xyzuv_buffer_index = static_cast<unsigned>( json.buffers.size() );
+    GltfBufferData xyzuv_buffer_data;
+    xyzuv_buffer_data.Data = reinterpret_cast<uint8_t*>( perspective.XyzuvVertices );
+    xyzuv_buffer_data.Size = static_cast<unsigned long>( perspective.FloatsCount * sizeof(float) );
+    Buffers.push_back(xyzuv_buffer_data);
+    GltfBuffer xyzuvBuffer;
+    xyzuvBuffer.byteLength = static_cast<unsigned>( xyzuv_buffer_data.Size );
+    xyzuvBuffer.uri = xyzuv_buffer_uri.str();
+    json.buffers.push_back(xyzuvBuffer);
+    CORE_DEBUG_ASSERT(xyzuv_buffer_index + 2 == Buffers.size());
+
+    const unsigned xyz_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
+    GltfBufferView xyzBufferView;
+    xyzBufferView.buffer = xyzuv_buffer_index;
+    xyzBufferView.byteLength = xyzuv_buffer_data.Size;
+    xyzBufferView.byteOffset = 12;
+    xyzBufferView.byteStride = 20; // x, y, z, u, v
+    json.bufferViews.push_back(xyzBufferView);
+
+    const unsigned uv_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
+    GltfBufferView uvBufferView;
+    uvBufferView.buffer = xyzuv_buffer_index;
+    uvBufferView.byteLength = xyzuv_buffer_data.Size;
+    uvBufferView.byteOffset = 0;
+    uvBufferView.byteStride = 20; // x, y, z, u, v
+    json.bufferViews.push_back(uvBufferView);
+
+    const unsigned xyz_accessor_index = static_cast<unsigned>( json.accessors.size() );
+    GltfAccessor xyzAccessor;
+    xyzAccessor.bufferView = xyz_buffer_view_index;
+    xyzAccessor.byteOffset = 0;
+    xyzAccessor.componentType = 5126; // GL_FLOAT
+    xyzAccessor.count = perspective.FloatsCount / 5;
+    xyzAccessor.type = "VEC3";
+    json.accessors.push_back(xyzAccessor);
+
+    const unsigned uv_accessor_index = static_cast<unsigned>( json.accessors.size() );
+    GltfAccessor uvAccessor;
+    uvAccessor.bufferView = uv_buffer_view_index;
+    uvAccessor.byteOffset = 0;
+    uvAccessor.componentType = 5126; // GL_FLOAT
+    uvAccessor.count = perspective.FloatsCount / 5;
+    uvAccessor.type = "VEC2";
+    json.accessors.push_back(uvAccessor);
+
+    // Indices buffers:
+
+    const unsigned indices_buffer_index = static_cast<unsigned>( json.buffers.size() );
+    GltfBufferData indices_buffer_data;
+    indices_buffer_data.Data = reinterpret_cast<uint8_t*>( perspective.Indices );
+    indices_buffer_data.Size = static_cast<unsigned long>( perspective.IndicesCount * sizeof(uint32_t) );
+    Buffers.push_back(indices_buffer_data);
+    GltfBuffer indicesBuffer;
+    indicesBuffer.byteLength = static_cast<unsigned>( indices_buffer_data.Size );
+    indicesBuffer.uri = indices_buffer_uri.str();
+    json.buffers.push_back(indicesBuffer);
+    CORE_DEBUG_ASSERT(indices_buffer_index + 2 == Buffers.size());
+
+    const unsigned indices_buffer_view_index = static_cast<unsigned>( json.bufferViews.size() );
+    GltfBufferView indicesBufferView;
+    indicesBufferView.buffer = indices_buffer_index;
+    indicesBufferView.byteLength = indices_buffer_data.Size;
+    indicesBufferView.byteOffset = 0;
+    indicesBufferView.byteStride = 4; // uint32
+    json.bufferViews.push_back(indicesBufferView);
+
+    const unsigned indices_accessor_index = static_cast<unsigned>( json.accessors.size() );
+    GltfAccessor indicesAccessor;
+    indicesAccessor.bufferView = indices_buffer_view_index;
+    indicesAccessor.byteOffset = 0;
+    indicesAccessor.componentType = 0x1405; // uint32
+    indicesAccessor.count = perspective.IndicesCount;
+    indicesAccessor.type = "SCALAR";
+    json.accessors.push_back(indicesAccessor);
+
+    // Mesh:
+
+    const unsigned mesh_index = static_cast<unsigned>( json.meshes.size() );
     GltfMeshPrimitive primitive;
     primitive.mode = 4; // GL_TRIANGLES
     primitive.material = material_index;
     primitive.indices = indices_accessor_index;
-    primitive.attributes_TEXCOORD_0 = texcoord_accessor_index;
-    primitive.attributes_POSITION = position_accessor_index;
+    primitive.attributes_TEXCOORD_0 = uv_accessor_index;
+    primitive.attributes_POSITION = xyz_accessor_index;
     GltfMesh mesh;
     mesh.primitives.push_back(primitive);
     json.meshes.push_back(mesh);
+
+    GltfNode node;
+    node.name = node_name_str;
+    node.mesh = mesh_index;
+    if (perspective.Extrinsics->IsIdentity) {
+        for (int i = 0; i < 16; ++i) {
+            node.matrix[i] = kIdentityMatrix[i];
+        }
+    } else {
+        for (int i = 0; i < 16; ++i) {
+            node.matrix[i] = static_cast<double>( perspective.Extrinsics->Transform[i] );
+        }
+    }
+    json.nodes.push_back(node);
 
     return true;
 }
@@ -760,8 +867,27 @@ bool GltfBuffers::SerializePerspective(GltfJsonFile& json, const XrcapPerspectiv
 //------------------------------------------------------------------------------
 // GLTF Writer
 
-bool WriteFrameToGlbFile(const XrcapFrame& frame, const char* file_path)
+static unsigned ChunkPadding4(unsigned bytes)
 {
+    unsigned padding = bytes % 4;
+    if (padding != 0) {
+        padding = 4 - padding;
+    }
+    return padding;
+}
+
+static unsigned ChunkLengthRoundUp4(unsigned bytes)
+{
+    return bytes + ChunkPadding4(bytes);
+}
+
+bool WriteFrameToGlbFile(
+    const XrcapFrame& frame,
+    const char* file_path,
+    bool use_draco)
+{
+    CORE_UNUSED(use_draco);
+
     std::ofstream file(file_path, std::ios::binary);
     if (!file) {
         spdlog::error("Unable to open file: {}", file_path);
@@ -779,34 +905,24 @@ bool WriteFrameToGlbFile(const XrcapFrame& frame, const char* file_path)
     GlbFileHeader file_header;
     unsigned length = kGlbFileHeaderBytes;
     for (const auto& buffer : buffers.Buffers) {
-        length += kGlbChunkHeaderBytes + buffer.Size;
+        length += kGlbChunkHeaderBytes + ChunkLengthRoundUp4(buffer.Size);
     }
     file_header.Length = static_cast<uint32_t>( length );
     file.write((const char*)&file_header, kGlbFileHeaderBytes);
 
-    // Unroll buffer 0: Pad JSON out to a multiple of 4 bytes
-    {
+    for (unsigned i = 0; i < count; ++i) {
         GlbChunkHeader chunk_header;
-        chunk_header.Type = kGlbChunkType_Json;
-        chunk_header.Length = static_cast<uint32_t>( buffers.Buffers[0].Size );
-
-        unsigned padding = chunk_header.Length % 4;
-        if (padding != 0) {
-            padding = 4 - padding;
-        }
-
-        chunk_header.Length += padding;
-        file.write((const char*)&chunk_header, kGlbChunkHeaderBytes);
-        file.write((const char*)buffers.Buffers[0].Data, buffers.Buffers[0].Size);
-        file.write("    ", padding);
-    }
-
-    for (unsigned i = 1; i < count; ++i) {
-        GlbChunkHeader chunk_header;
-        chunk_header.Type = kGlbChunkType_Bin;
+        chunk_header.Type = i == 0 ? kGlbChunkType_Json : kGlbChunkType_Bin;
         chunk_header.Length = static_cast<uint32_t>( buffers.Buffers[i].Size );
+
+        const unsigned padding = ChunkPadding4(chunk_header.Length);
+        chunk_header.Length += padding;
+
         file.write((const char*)&chunk_header, kGlbChunkHeaderBytes);
         file.write((const char*)buffers.Buffers[i].Data, buffers.Buffers[i].Size);
+        if (padding > 0) {
+            file.write("    ", padding);
+        }
     }
 
     return true;

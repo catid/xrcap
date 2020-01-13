@@ -53,7 +53,10 @@ static const unsigned kGlbChunkHeaderBytes = 8;
 // GLTF Writer
 
 // GLB is the binary version of glTF 2.0 that can contain textures and so on
-bool WriteFrameToGlbFile(const XrcapFrame& frame, const char* file_path);
+bool WriteFrameToGlbFile(
+    const XrcapFrame& frame,
+    const char* file_path,
+    bool use_draco);
 
 
 } // namespace core
