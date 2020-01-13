@@ -7,7 +7,14 @@
     https://github.com/KhronosGroup/glTF/tree/master/specification/2.0
 
     Other references:
+    https://github.khronos.org/glTF-Validator/
+    https://developers.facebook.com/tools/3d/validation
     https://github.com/facebookincubator/FBX2glTF/
+
+    Maximum GLB size for Facebook = 3145728 bytes
+
+    Known issues:
+    + Images are not padded out to power-of-two sizes
 */
 
 #pragma once

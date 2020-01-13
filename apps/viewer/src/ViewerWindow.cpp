@@ -1005,6 +1005,9 @@ void ViewerWindow::SaveGltf()
 {
     spdlog::info("Saving glTF");
 
+    RenderPaused = true;
+    xrcap_playback_tricks(RenderPaused ? 1 : 0, FileLoopEnabled ? 1 : 0);
+
     nfdchar_t* path = nullptr;
     nfdresult_t result = NFD_SaveDialog("glb", "still_frame.glb", &path);
     ScopedFunction path_scope([&]() {
@@ -1218,6 +1221,7 @@ void ViewerWindow::OnKey(int key, bool press)
     {
         if (press) {
             RenderPaused = !RenderPaused;
+            xrcap_playback_tricks(RenderPaused ? 1 : 0, FileLoopEnabled ? 1 : 0);
             spdlog::debug("RenderPaused = {}", RenderPaused);
         }
     }

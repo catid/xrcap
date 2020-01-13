@@ -199,6 +199,7 @@ void CaptureClient::GetFrame(XrcapFrame* output_frame)
     output_frame->Valid = 1;
     output_frame->FrameNumber = FrameNumber++;
     output_frame->ExposureEpochUsec = PinnedBatch->EpochUsec;
+    output_frame->VideoStartUsec = PinnedBatch->VideoBootUsec;
     for (auto& image : PinnedBatch->Frames)
     {
         const unsigned perspective_index = GetPerspectiveIndex(image);
