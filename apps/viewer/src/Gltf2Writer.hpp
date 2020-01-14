@@ -24,19 +24,9 @@
 #pragma once
 
 #include <capture_client.h>
+#include <string>
 
 namespace core {
-
-
-//------------------------------------------------------------------------------
-// Constants
-
-// 0 = slowest speed, best compression
-// 10 = fastest, but worst compression
-static const int kDracoEncodeSpeed = 0;
-static const int kDracoDecodeSpeed = 0;
-
-//#define GLTF2_PRETTY_JSON_WRITER
 
 
 //------------------------------------------------------------------------------
@@ -74,11 +64,20 @@ static const unsigned kGlbChunkHeaderBytes = 8;
 //------------------------------------------------------------------------------
 // GLTF Writer
 
+struct GltfParams
+{
+    // Full path to .glb file
+    std::string OutputFilePath;
+
+    // Google Draco mesh compressor optional extension
+    bool EnableDraco = false;
+
+    // JPEG quality level 80..100
+    int JpegQuality = 90;
+};
+
 // GLB is the binary version of glTF 2.0 that can contain textures and so on
-bool WriteFrameToGlbFile(
-    const XrcapFrame& frame,
-    const char* file_path,
-    bool enable_draco); // Google Draco mesh compressor optional extension
+bool WriteFrameToGlbFile(const XrcapFrame& frame, const GltfParams& params);
 
 
 } // namespace core

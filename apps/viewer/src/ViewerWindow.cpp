@@ -923,11 +923,12 @@ void ViewerWindow::SetupUI()
                 nk_label(ctx, "No File Loaded", NK_TEXT_LEFT);
             }
 
-            nk_layout_row_dynamic(ctx, 30, 2);
+            nk_layout_row_dynamic(ctx, 30, 3);
             if (nk_button_label(ctx, "Export glTF2")) {
                 SaveGltf();
             }
             nk_checkbox_label(ctx, "Use Draco", &DracoCompressionEnabled);
+            nk_property_int(ctx, "#jpeg", 80, &GltfJpegQuality, 100, 1, 1.f);
         }
         nk_end(ctx);
     }
@@ -1015,7 +1016,11 @@ void ViewerWindow::SaveGltf()
     });
     if (result == NFD_OKAY && path) {
         spdlog::info("SaveGltf: User selected path: `{}`", path);
-        if (WriteFrameToGlbFile(LastFrame, path, DracoCompressionEnabled != 0)) {
+        GltfParams params;
+        params.OutputFilePath = path;
+        params.EnableDraco = (DracoCompressionEnabled != 0);
+        params.JpegQuality = GltfJpegQuality;
+        if (WriteFrameToGlbFile(LastFrame, params)) {
             spdlog::info("SaveGltf: Success");
         } else {
             spdlog::error("SaveGltf: File export failed");
