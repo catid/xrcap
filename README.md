@@ -7,6 +7,8 @@ It supports password-based security, and the video data sent from capture server
 
 Here's an example playback of a 3-camera recording using this toolset: https://youtu.be/bPHLcOLTEV8
 
+And here's a single frame of video as a 3D model: https://sketchfab.com/3d-models/more-xmas-model-stills-6f9f6b08027b4f9b9f13ef81d07da895?fbclid=IwAR1rzYwJOr8kM_Nl6j5jDtC7GpMCfaAgjHqiEG8bPBRQF3EhTBBc3Sf9hX4
+
 ## Known issues
 
 Lots of bugs everywhere.  Mainly releasing this so people have access to the code, but I don't think it's ready for a binary release yet.
@@ -23,7 +25,7 @@ Visual Studio 2019 (community edition might work) is required: https://visualstu
 
 The Windows 10 SDK is required: https://developer.microsoft.com/en-US/windows/downloads/windows-10-sdk
 
-CMake is required: https://github.com/Kitware/CMake/releases/download/v3.16.2/cmake-3.16.2-win64-x64.msi
+CMake is required: https://cmake.org/download/
 
 Check out a copy of the code and then run CMake.  Specify the source folder at the top (e.g. `C:/git/xrcap`) and an "out of source" build by setting Where to build the binaries: `C:/git/xrcap/build`.
 
