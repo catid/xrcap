@@ -236,6 +236,8 @@ void ViewerWindow::Loop()
     }
 
     StopRender();
+
+    Terminated = true;
 }
 
 void ViewerWindow::StartRender()
